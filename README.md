@@ -127,17 +127,28 @@ Con `β_dal_2D = false` si pone β = 1: mesh e risultati HDF5 non servono e non 
 
 ## Input
 
-Gli input di un caso stanno in una sottocartella di `input/`, indicata da `InputFolder` in
-[src/main.jl](src/main.jl):
+Gli input di un caso stanno in una sottocartella di `input/`. La cartella da usare si passa
+dalla riga di comando, vedi [Come lanciarlo](#come-lanciarlo).
 
 ```
 input/<caso>/
 ├── centerpoints.csv                              # elenco delle sezioni da elaborare
 ├── bankpoints.csv                                # quote degli argini
-├── <FilePrefix><nome>.csv                        # un file per sezione (output BASEMENT)
-├── <MeshFile>.2dm                                # mesh 2D      (solo se β_dal_2D)
-└── <ResultsFile>.h5                              # risultati 2D (solo se β_dal_2D)
+├── <prefisso><nome>.csv                          # un file per sezione (output BASEMENT)
+├── <qualsiasi nome>.2dm                          # mesh 2D      (solo se β_dal_2D)
+└── <qualsiasi nome>results.h5                    # risultati 2D (solo se β_dal_2D)
 ```
+
+I nomi dei file non vanno scritti nello script, perché vengono riconosciuti da soli:
+- il **prefisso** dei file delle sezioni (es. `ns_50_scalini_`) si ricava dai file che finiscono
+  con il nome di una sezione di `centerpoints.csv`, e deve essere uguale per tutte le sezioni;
+- **mesh e risultati** sono l'unico file `*.2dm` e l'unico file `*results.h5` della cartella.
+  Se ce ne sono zero o più di uno, lo script si ferma.
+
+In tutti i file CSV le colonne sono cercate **per nome**, non per posizione. Il nome deve essere
+esatto, maiuscole comprese. Le colonne in più, per esempio altri attributi esportati da QGIS,
+vengono ignorate e l'ordine delle colonne non conta. Se manca una colonna richiesta, lo script si
+ferma e stampa l'elenco delle colonne mancanti, di quelle trovate e un esempio di file valido.
 
 ### `centerpoints.csv`: elenco delle sezioni
 
@@ -165,7 +176,7 @@ Due punti per sezione, sulla sommità degli argini.
 
 Ogni sezione di `centerpoints.csv` deve avere sia `_sx` che `_dx`.
 
-### File delle sezioni: `<FilePrefix><nome>.csv`
+### File delle sezioni: `<prefisso><nome>.csv`
 
 È l'output per nodestring di BASEMENT 2D (*NodeStrg* → CSV), un file per sezione, ad esempio
 `ns_50_scalini_S0400.csv`. **Ogni riga è un'uscita della simulazione**: la prima è la
@@ -307,22 +318,44 @@ La prima volta, dalla cartella del progetto:
 julia --project=. -e 'using Pkg; Pkg.instantiate()'
 ```
 
-Poi:
+Poi si sceglie il caso dalla riga di comando, senza modificare lo script:
 
 ```bash
-julia --project=. src/main.jl
+julia --project=. src/main.jl <cartella di input> [<cartella di output>]
 ```
+
+| Argomento | Significato |
+|---|---|
+| `<cartella di input>` | sottocartella di `input/`. Va bene sia `S_0050_6000_q5` sia `input/S_0050_6000_q5/`, che si ottiene con il completamento automatico del terminale |
+| `<cartella di output>` | facoltativo: sottocartella di `output/`. Se manca, ha lo stesso nome della cartella di input |
+
+Esempi:
+
+```bash
+julia --project=. src/main.jl S_0050_6000_q5              # → output/S_0050_6000_q5
+julia --project=. src/main.jl S_0050_6000_q5 S_50m_q5     # → output/S_50m_q5
+julia --project=. src/main.jl                             # caso predefinito: S_0050_6000_q2 → output/S_50m_q2
+julia --project=. src/main.jl --help                      # uso e cartelle disponibili in input/
+```
+
+All'avvio lo script stampa la cartella di input, il prefisso dei file delle sezioni che ha
+riconosciuto e la cartella di output. Se la cartella di input non esiste, si ferma ed elenca
+quelle disponibili.
 
 I percorsi sono risolti rispetto alla posizione dello script, quindi la cartella di lavoro non
 conta: basta che `--project` punti a questa cartella.
 
-In alternativa, dal REPL (utile per avere i grafici a schermo):
+In alternativa, dal REPL (utile per avere i grafici a schermo). Il caso si sceglie riempiendo
+`ARGS` prima di `include`:
 
 ```julia
 julia> ]activate .
-julia> include("src/main.jl")          # esegue già main(; dosave=true)
+julia> append!(empty!(ARGS), ["S_0050_6000_q5"])   # facoltativo: senza, caso predefinito
+julia> include("src/main.jl")                      # esegue già main(; dosave=true)
 julia> tabelle, tabella_unica, geometria = main(; doplot=true)   # rilancia mostrando i grafici
 ```
+
+Per cambiare caso dal REPL bisogna riavviare Julia: la cartella viene fissata al primo `include`.
 
 `main` accetta:
 
@@ -344,28 +377,19 @@ e richiede più memoria.
 
 ## Parametri di configurazione
 
-Sono le costanti in testa a [src/main.jl](src/main.jl). Per cambiare caso si modificano lì.
+Sono le costanti in testa a [src/main.jl](src/main.jl). Il caso da elaborare **non** si cambia
+qui ma dalla riga di comando (vedi [Come lanciarlo](#come-lanciarlo)).
 
 | Costante | Significato |
 |---|---|
+| `InputDefault`, `OutputDefault` | caso elaborato quando si lancia lo script senza argomenti |
 | `β_dal_2D` | `true`: β dal campo di velocità 2D; `false`: β = 1 |
-| `InputFolder` | cartella del caso in `input/` |
-| `OutputName` | nome della cartella di destinazione in `output/` |
-| `OutputFolder` | `output/<OutputName>` con β = 1, `output/<OutputName>_beta` con β dal 2D, così i due casi non si sovrascrivono |
-| `FilePrefix` | prefisso dei file delle sezioni (es. `ns_50_scalini_`) |
-| `MeshFile`, `ResultsFile` | nomi della mesh `.2dm` e dei risultati `.h5` |
+| `OutputFolder` | `output/<cartella di output>` con β = 1, `output/<cartella di output>_beta` con β dal 2D, così i due casi non si sovrascrivono |
 | `Format` | estensione dei file tabellari (`.csv`) |
 | `g` | accelerazione di gravità [m/s²] |
 | `iWSE_lim`, `Ks_lim`, `β_lim` | intervalli di plausibilità, usati **solo** per gli avvisi |
 | `Qrel_lim` | scarto relativo massimo tollerato tra la portata degli elementi e quella della sezione (calcolo di β) |
 | `h_dry`, `Q_dry`, `Ks_dry` | tirante, portata e Ks usati per ricostruire la prima riga asciutta |
-
-Esempio, per elaborare il caso con scalini da 5 m³/s:
-
-```julia
-const InputFolder = joinpath(ProjectFolder, "input", "S_0050_6000_q5")
-const OutputName  = "S_50m_q5"
-```
 
 Di norma si usa **β = 1** (`β_dal_2D = false`): con β dal 2D i risultati del modello 1D cambiano
 poco. Il calcolo di β resta disponibile per confronto e scrive in una cartella separata.
