@@ -1,0 +1,651 @@
+<?xml version="1.0"?>
+<Xdmf Version="2.0">
+	<Domain>
+		<Topology TopologyType="Triangle" NumberOfElements="1038443">
+			<DataItem Format="HDF" Rank="2" Dimensions="1038443 3">minimum_scalini_results.h5:CellsAll/Topology</DataItem>
+		</Topology>
+		<Geometry>
+			<DataItem Format="HDF" Rank="2" Dimensions="521564 3">minimum_scalini_results.h5:NodesAll/Coordnts</DataItem>
+		</Geometry>
+		<Grid GridType="Collection" CollectionType="Temporal">
+			<Grid GridType="Uniform" Name="@0.000000">
+				<Time TimeType="Single" Value="0.000000" />
+				<Topology Reference="XML">/Xdmf/Domain/Topology[1]</Topology>
+				<Geometry Reference="XML">/Xdmf/Domain/Geometry[1]</Geometry>
+				<Attribute AttributeType="Scalar" Center="Cell" Name="water_depth">
+					<DataItem ItemType="Function" Function="$0-$1" Dimensions="1038443 1">
+						<DataItem ItemType="HyperSlab" Dimensions="1038443 1">
+							<DataItem Dimensions="3 2" Format="XML">0 0 1 1 1038443 1</DataItem>
+							<DataItem Format="HDF" Rank="2" Dimensions="1038443 3">minimum_scalini_results.h5:/RESULTS/CellsAll/HydState/0000000</DataItem>
+						</DataItem>
+						<DataItem ItemType="HyperSlab" Dimensions="1038443 1">
+							<DataItem Dimensions="3 2" Format="XML">0 0 1 1 1038443 1</DataItem>
+							<DataItem Format="HDF" Rank="2" Dimensions="1038443 1">minimum_scalini_results.h5:CellsAll/BottomEl</DataItem>
+						</DataItem>
+					</DataItem>
+				</Attribute>
+				<Attribute AttributeType="Scalar" Center="Cell" Name="ns_hyd_discharge">
+					<DataItem ItemType="HyperSlab" Dimensions="1038443 1">
+						<DataItem Dimensions="3 2" Format="XML">0 1 1 1 1038443 1</DataItem>
+						<DataItem Format="HDF" Rank="2" Dimensions="1038443 30">minimum_scalini_results.h5:/RESULTS/NodeStrg/StateVar/0000000</DataItem>
+					</DataItem>
+				</Attribute>
+				<Attribute AttributeType="Scalar" Center="Cell" Name="flow_velocity_abs">
+					<DataItem ItemType="HyperSlab" Dimensions="1038443 1">
+						<DataItem Dimensions="3 2" Format="XML">0 0 1 1 1038443 1</DataItem>
+						<DataItem Format="HDF" Rank="2" Dimensions="1038443 1">minimum_scalini_results_aux.h5:flow_velocity_abs/0</DataItem>
+					</DataItem>
+				</Attribute>
+			</Grid>
+			<Grid GridType="Uniform" Name="@36000.000000">
+				<Time TimeType="Single" Value="36000.000000" />
+				<Topology Reference="XML">/Xdmf/Domain/Topology[1]</Topology>
+				<Geometry Reference="XML">/Xdmf/Domain/Geometry[1]</Geometry>
+				<Attribute AttributeType="Scalar" Center="Cell" Name="water_depth">
+					<DataItem ItemType="Function" Function="$0-$1" Dimensions="1038443 1">
+						<DataItem ItemType="HyperSlab" Dimensions="1038443 1">
+							<DataItem Dimensions="3 2" Format="XML">0 0 1 1 1038443 1</DataItem>
+							<DataItem Format="HDF" Rank="2" Dimensions="1038443 3">minimum_scalini_results.h5:/RESULTS/CellsAll/HydState/0000001</DataItem>
+						</DataItem>
+						<DataItem ItemType="HyperSlab" Dimensions="1038443 1">
+							<DataItem Dimensions="3 2" Format="XML">0 0 1 1 1038443 1</DataItem>
+							<DataItem Format="HDF" Rank="2" Dimensions="1038443 1">minimum_scalini_results.h5:CellsAll/BottomEl</DataItem>
+						</DataItem>
+					</DataItem>
+				</Attribute>
+				<Attribute AttributeType="Scalar" Center="Cell" Name="ns_hyd_discharge">
+					<DataItem ItemType="HyperSlab" Dimensions="1038443 1">
+						<DataItem Dimensions="3 2" Format="XML">0 1 1 1 1038443 1</DataItem>
+						<DataItem Format="HDF" Rank="2" Dimensions="1038443 30">minimum_scalini_results.h5:/RESULTS/NodeStrg/StateVar/0000001</DataItem>
+					</DataItem>
+				</Attribute>
+				<Attribute AttributeType="Scalar" Center="Cell" Name="flow_velocity_abs">
+					<DataItem ItemType="HyperSlab" Dimensions="1038443 1">
+						<DataItem Dimensions="3 2" Format="XML">0 0 1 1 1038443 1</DataItem>
+						<DataItem Format="HDF" Rank="2" Dimensions="1038443 1">minimum_scalini_results_aux.h5:flow_velocity_abs/1</DataItem>
+					</DataItem>
+				</Attribute>
+			</Grid>
+			<Grid GridType="Uniform" Name="@72000.000000">
+				<Time TimeType="Single" Value="72000.000000" />
+				<Topology Reference="XML">/Xdmf/Domain/Topology[1]</Topology>
+				<Geometry Reference="XML">/Xdmf/Domain/Geometry[1]</Geometry>
+				<Attribute AttributeType="Scalar" Center="Cell" Name="water_depth">
+					<DataItem ItemType="Function" Function="$0-$1" Dimensions="1038443 1">
+						<DataItem ItemType="HyperSlab" Dimensions="1038443 1">
+							<DataItem Dimensions="3 2" Format="XML">0 0 1 1 1038443 1</DataItem>
+							<DataItem Format="HDF" Rank="2" Dimensions="1038443 3">minimum_scalini_results.h5:/RESULTS/CellsAll/HydState/0000002</DataItem>
+						</DataItem>
+						<DataItem ItemType="HyperSlab" Dimensions="1038443 1">
+							<DataItem Dimensions="3 2" Format="XML">0 0 1 1 1038443 1</DataItem>
+							<DataItem Format="HDF" Rank="2" Dimensions="1038443 1">minimum_scalini_results.h5:CellsAll/BottomEl</DataItem>
+						</DataItem>
+					</DataItem>
+				</Attribute>
+				<Attribute AttributeType="Scalar" Center="Cell" Name="ns_hyd_discharge">
+					<DataItem ItemType="HyperSlab" Dimensions="1038443 1">
+						<DataItem Dimensions="3 2" Format="XML">0 1 1 1 1038443 1</DataItem>
+						<DataItem Format="HDF" Rank="2" Dimensions="1038443 30">minimum_scalini_results.h5:/RESULTS/NodeStrg/StateVar/0000002</DataItem>
+					</DataItem>
+				</Attribute>
+				<Attribute AttributeType="Scalar" Center="Cell" Name="flow_velocity_abs">
+					<DataItem ItemType="HyperSlab" Dimensions="1038443 1">
+						<DataItem Dimensions="3 2" Format="XML">0 0 1 1 1038443 1</DataItem>
+						<DataItem Format="HDF" Rank="2" Dimensions="1038443 1">minimum_scalini_results_aux.h5:flow_velocity_abs/2</DataItem>
+					</DataItem>
+				</Attribute>
+			</Grid>
+			<Grid GridType="Uniform" Name="@108000.000000">
+				<Time TimeType="Single" Value="108000.000000" />
+				<Topology Reference="XML">/Xdmf/Domain/Topology[1]</Topology>
+				<Geometry Reference="XML">/Xdmf/Domain/Geometry[1]</Geometry>
+				<Attribute AttributeType="Scalar" Center="Cell" Name="water_depth">
+					<DataItem ItemType="Function" Function="$0-$1" Dimensions="1038443 1">
+						<DataItem ItemType="HyperSlab" Dimensions="1038443 1">
+							<DataItem Dimensions="3 2" Format="XML">0 0 1 1 1038443 1</DataItem>
+							<DataItem Format="HDF" Rank="2" Dimensions="1038443 3">minimum_scalini_results.h5:/RESULTS/CellsAll/HydState/0000003</DataItem>
+						</DataItem>
+						<DataItem ItemType="HyperSlab" Dimensions="1038443 1">
+							<DataItem Dimensions="3 2" Format="XML">0 0 1 1 1038443 1</DataItem>
+							<DataItem Format="HDF" Rank="2" Dimensions="1038443 1">minimum_scalini_results.h5:CellsAll/BottomEl</DataItem>
+						</DataItem>
+					</DataItem>
+				</Attribute>
+				<Attribute AttributeType="Scalar" Center="Cell" Name="ns_hyd_discharge">
+					<DataItem ItemType="HyperSlab" Dimensions="1038443 1">
+						<DataItem Dimensions="3 2" Format="XML">0 1 1 1 1038443 1</DataItem>
+						<DataItem Format="HDF" Rank="2" Dimensions="1038443 30">minimum_scalini_results.h5:/RESULTS/NodeStrg/StateVar/0000003</DataItem>
+					</DataItem>
+				</Attribute>
+				<Attribute AttributeType="Scalar" Center="Cell" Name="flow_velocity_abs">
+					<DataItem ItemType="HyperSlab" Dimensions="1038443 1">
+						<DataItem Dimensions="3 2" Format="XML">0 0 1 1 1038443 1</DataItem>
+						<DataItem Format="HDF" Rank="2" Dimensions="1038443 1">minimum_scalini_results_aux.h5:flow_velocity_abs/3</DataItem>
+					</DataItem>
+				</Attribute>
+			</Grid>
+			<Grid GridType="Uniform" Name="@144000.000000">
+				<Time TimeType="Single" Value="144000.000000" />
+				<Topology Reference="XML">/Xdmf/Domain/Topology[1]</Topology>
+				<Geometry Reference="XML">/Xdmf/Domain/Geometry[1]</Geometry>
+				<Attribute AttributeType="Scalar" Center="Cell" Name="water_depth">
+					<DataItem ItemType="Function" Function="$0-$1" Dimensions="1038443 1">
+						<DataItem ItemType="HyperSlab" Dimensions="1038443 1">
+							<DataItem Dimensions="3 2" Format="XML">0 0 1 1 1038443 1</DataItem>
+							<DataItem Format="HDF" Rank="2" Dimensions="1038443 3">minimum_scalini_results.h5:/RESULTS/CellsAll/HydState/0000004</DataItem>
+						</DataItem>
+						<DataItem ItemType="HyperSlab" Dimensions="1038443 1">
+							<DataItem Dimensions="3 2" Format="XML">0 0 1 1 1038443 1</DataItem>
+							<DataItem Format="HDF" Rank="2" Dimensions="1038443 1">minimum_scalini_results.h5:CellsAll/BottomEl</DataItem>
+						</DataItem>
+					</DataItem>
+				</Attribute>
+				<Attribute AttributeType="Scalar" Center="Cell" Name="ns_hyd_discharge">
+					<DataItem ItemType="HyperSlab" Dimensions="1038443 1">
+						<DataItem Dimensions="3 2" Format="XML">0 1 1 1 1038443 1</DataItem>
+						<DataItem Format="HDF" Rank="2" Dimensions="1038443 30">minimum_scalini_results.h5:/RESULTS/NodeStrg/StateVar/0000004</DataItem>
+					</DataItem>
+				</Attribute>
+				<Attribute AttributeType="Scalar" Center="Cell" Name="flow_velocity_abs">
+					<DataItem ItemType="HyperSlab" Dimensions="1038443 1">
+						<DataItem Dimensions="3 2" Format="XML">0 0 1 1 1038443 1</DataItem>
+						<DataItem Format="HDF" Rank="2" Dimensions="1038443 1">minimum_scalini_results_aux.h5:flow_velocity_abs/4</DataItem>
+					</DataItem>
+				</Attribute>
+			</Grid>
+			<Grid GridType="Uniform" Name="@180000.000000">
+				<Time TimeType="Single" Value="180000.000000" />
+				<Topology Reference="XML">/Xdmf/Domain/Topology[1]</Topology>
+				<Geometry Reference="XML">/Xdmf/Domain/Geometry[1]</Geometry>
+				<Attribute AttributeType="Scalar" Center="Cell" Name="water_depth">
+					<DataItem ItemType="Function" Function="$0-$1" Dimensions="1038443 1">
+						<DataItem ItemType="HyperSlab" Dimensions="1038443 1">
+							<DataItem Dimensions="3 2" Format="XML">0 0 1 1 1038443 1</DataItem>
+							<DataItem Format="HDF" Rank="2" Dimensions="1038443 3">minimum_scalini_results.h5:/RESULTS/CellsAll/HydState/0000005</DataItem>
+						</DataItem>
+						<DataItem ItemType="HyperSlab" Dimensions="1038443 1">
+							<DataItem Dimensions="3 2" Format="XML">0 0 1 1 1038443 1</DataItem>
+							<DataItem Format="HDF" Rank="2" Dimensions="1038443 1">minimum_scalini_results.h5:CellsAll/BottomEl</DataItem>
+						</DataItem>
+					</DataItem>
+				</Attribute>
+				<Attribute AttributeType="Scalar" Center="Cell" Name="ns_hyd_discharge">
+					<DataItem ItemType="HyperSlab" Dimensions="1038443 1">
+						<DataItem Dimensions="3 2" Format="XML">0 1 1 1 1038443 1</DataItem>
+						<DataItem Format="HDF" Rank="2" Dimensions="1038443 30">minimum_scalini_results.h5:/RESULTS/NodeStrg/StateVar/0000005</DataItem>
+					</DataItem>
+				</Attribute>
+				<Attribute AttributeType="Scalar" Center="Cell" Name="flow_velocity_abs">
+					<DataItem ItemType="HyperSlab" Dimensions="1038443 1">
+						<DataItem Dimensions="3 2" Format="XML">0 0 1 1 1038443 1</DataItem>
+						<DataItem Format="HDF" Rank="2" Dimensions="1038443 1">minimum_scalini_results_aux.h5:flow_velocity_abs/5</DataItem>
+					</DataItem>
+				</Attribute>
+			</Grid>
+			<Grid GridType="Uniform" Name="@216000.000000">
+				<Time TimeType="Single" Value="216000.000000" />
+				<Topology Reference="XML">/Xdmf/Domain/Topology[1]</Topology>
+				<Geometry Reference="XML">/Xdmf/Domain/Geometry[1]</Geometry>
+				<Attribute AttributeType="Scalar" Center="Cell" Name="water_depth">
+					<DataItem ItemType="Function" Function="$0-$1" Dimensions="1038443 1">
+						<DataItem ItemType="HyperSlab" Dimensions="1038443 1">
+							<DataItem Dimensions="3 2" Format="XML">0 0 1 1 1038443 1</DataItem>
+							<DataItem Format="HDF" Rank="2" Dimensions="1038443 3">minimum_scalini_results.h5:/RESULTS/CellsAll/HydState/0000006</DataItem>
+						</DataItem>
+						<DataItem ItemType="HyperSlab" Dimensions="1038443 1">
+							<DataItem Dimensions="3 2" Format="XML">0 0 1 1 1038443 1</DataItem>
+							<DataItem Format="HDF" Rank="2" Dimensions="1038443 1">minimum_scalini_results.h5:CellsAll/BottomEl</DataItem>
+						</DataItem>
+					</DataItem>
+				</Attribute>
+				<Attribute AttributeType="Scalar" Center="Cell" Name="ns_hyd_discharge">
+					<DataItem ItemType="HyperSlab" Dimensions="1038443 1">
+						<DataItem Dimensions="3 2" Format="XML">0 1 1 1 1038443 1</DataItem>
+						<DataItem Format="HDF" Rank="2" Dimensions="1038443 30">minimum_scalini_results.h5:/RESULTS/NodeStrg/StateVar/0000006</DataItem>
+					</DataItem>
+				</Attribute>
+				<Attribute AttributeType="Scalar" Center="Cell" Name="flow_velocity_abs">
+					<DataItem ItemType="HyperSlab" Dimensions="1038443 1">
+						<DataItem Dimensions="3 2" Format="XML">0 0 1 1 1038443 1</DataItem>
+						<DataItem Format="HDF" Rank="2" Dimensions="1038443 1">minimum_scalini_results_aux.h5:flow_velocity_abs/6</DataItem>
+					</DataItem>
+				</Attribute>
+			</Grid>
+			<Grid GridType="Uniform" Name="@252000.000000">
+				<Time TimeType="Single" Value="252000.000000" />
+				<Topology Reference="XML">/Xdmf/Domain/Topology[1]</Topology>
+				<Geometry Reference="XML">/Xdmf/Domain/Geometry[1]</Geometry>
+				<Attribute AttributeType="Scalar" Center="Cell" Name="water_depth">
+					<DataItem ItemType="Function" Function="$0-$1" Dimensions="1038443 1">
+						<DataItem ItemType="HyperSlab" Dimensions="1038443 1">
+							<DataItem Dimensions="3 2" Format="XML">0 0 1 1 1038443 1</DataItem>
+							<DataItem Format="HDF" Rank="2" Dimensions="1038443 3">minimum_scalini_results.h5:/RESULTS/CellsAll/HydState/0000007</DataItem>
+						</DataItem>
+						<DataItem ItemType="HyperSlab" Dimensions="1038443 1">
+							<DataItem Dimensions="3 2" Format="XML">0 0 1 1 1038443 1</DataItem>
+							<DataItem Format="HDF" Rank="2" Dimensions="1038443 1">minimum_scalini_results.h5:CellsAll/BottomEl</DataItem>
+						</DataItem>
+					</DataItem>
+				</Attribute>
+				<Attribute AttributeType="Scalar" Center="Cell" Name="ns_hyd_discharge">
+					<DataItem ItemType="HyperSlab" Dimensions="1038443 1">
+						<DataItem Dimensions="3 2" Format="XML">0 1 1 1 1038443 1</DataItem>
+						<DataItem Format="HDF" Rank="2" Dimensions="1038443 30">minimum_scalini_results.h5:/RESULTS/NodeStrg/StateVar/0000007</DataItem>
+					</DataItem>
+				</Attribute>
+				<Attribute AttributeType="Scalar" Center="Cell" Name="flow_velocity_abs">
+					<DataItem ItemType="HyperSlab" Dimensions="1038443 1">
+						<DataItem Dimensions="3 2" Format="XML">0 0 1 1 1038443 1</DataItem>
+						<DataItem Format="HDF" Rank="2" Dimensions="1038443 1">minimum_scalini_results_aux.h5:flow_velocity_abs/7</DataItem>
+					</DataItem>
+				</Attribute>
+			</Grid>
+			<Grid GridType="Uniform" Name="@288000.000000">
+				<Time TimeType="Single" Value="288000.000000" />
+				<Topology Reference="XML">/Xdmf/Domain/Topology[1]</Topology>
+				<Geometry Reference="XML">/Xdmf/Domain/Geometry[1]</Geometry>
+				<Attribute AttributeType="Scalar" Center="Cell" Name="water_depth">
+					<DataItem ItemType="Function" Function="$0-$1" Dimensions="1038443 1">
+						<DataItem ItemType="HyperSlab" Dimensions="1038443 1">
+							<DataItem Dimensions="3 2" Format="XML">0 0 1 1 1038443 1</DataItem>
+							<DataItem Format="HDF" Rank="2" Dimensions="1038443 3">minimum_scalini_results.h5:/RESULTS/CellsAll/HydState/0000008</DataItem>
+						</DataItem>
+						<DataItem ItemType="HyperSlab" Dimensions="1038443 1">
+							<DataItem Dimensions="3 2" Format="XML">0 0 1 1 1038443 1</DataItem>
+							<DataItem Format="HDF" Rank="2" Dimensions="1038443 1">minimum_scalini_results.h5:CellsAll/BottomEl</DataItem>
+						</DataItem>
+					</DataItem>
+				</Attribute>
+				<Attribute AttributeType="Scalar" Center="Cell" Name="ns_hyd_discharge">
+					<DataItem ItemType="HyperSlab" Dimensions="1038443 1">
+						<DataItem Dimensions="3 2" Format="XML">0 1 1 1 1038443 1</DataItem>
+						<DataItem Format="HDF" Rank="2" Dimensions="1038443 30">minimum_scalini_results.h5:/RESULTS/NodeStrg/StateVar/0000008</DataItem>
+					</DataItem>
+				</Attribute>
+				<Attribute AttributeType="Scalar" Center="Cell" Name="flow_velocity_abs">
+					<DataItem ItemType="HyperSlab" Dimensions="1038443 1">
+						<DataItem Dimensions="3 2" Format="XML">0 0 1 1 1038443 1</DataItem>
+						<DataItem Format="HDF" Rank="2" Dimensions="1038443 1">minimum_scalini_results_aux.h5:flow_velocity_abs/8</DataItem>
+					</DataItem>
+				</Attribute>
+			</Grid>
+			<Grid GridType="Uniform" Name="@324000.000000">
+				<Time TimeType="Single" Value="324000.000000" />
+				<Topology Reference="XML">/Xdmf/Domain/Topology[1]</Topology>
+				<Geometry Reference="XML">/Xdmf/Domain/Geometry[1]</Geometry>
+				<Attribute AttributeType="Scalar" Center="Cell" Name="water_depth">
+					<DataItem ItemType="Function" Function="$0-$1" Dimensions="1038443 1">
+						<DataItem ItemType="HyperSlab" Dimensions="1038443 1">
+							<DataItem Dimensions="3 2" Format="XML">0 0 1 1 1038443 1</DataItem>
+							<DataItem Format="HDF" Rank="2" Dimensions="1038443 3">minimum_scalini_results.h5:/RESULTS/CellsAll/HydState/0000009</DataItem>
+						</DataItem>
+						<DataItem ItemType="HyperSlab" Dimensions="1038443 1">
+							<DataItem Dimensions="3 2" Format="XML">0 0 1 1 1038443 1</DataItem>
+							<DataItem Format="HDF" Rank="2" Dimensions="1038443 1">minimum_scalini_results.h5:CellsAll/BottomEl</DataItem>
+						</DataItem>
+					</DataItem>
+				</Attribute>
+				<Attribute AttributeType="Scalar" Center="Cell" Name="ns_hyd_discharge">
+					<DataItem ItemType="HyperSlab" Dimensions="1038443 1">
+						<DataItem Dimensions="3 2" Format="XML">0 1 1 1 1038443 1</DataItem>
+						<DataItem Format="HDF" Rank="2" Dimensions="1038443 30">minimum_scalini_results.h5:/RESULTS/NodeStrg/StateVar/0000009</DataItem>
+					</DataItem>
+				</Attribute>
+				<Attribute AttributeType="Scalar" Center="Cell" Name="flow_velocity_abs">
+					<DataItem ItemType="HyperSlab" Dimensions="1038443 1">
+						<DataItem Dimensions="3 2" Format="XML">0 0 1 1 1038443 1</DataItem>
+						<DataItem Format="HDF" Rank="2" Dimensions="1038443 1">minimum_scalini_results_aux.h5:flow_velocity_abs/9</DataItem>
+					</DataItem>
+				</Attribute>
+			</Grid>
+			<Grid GridType="Uniform" Name="@360000.000000">
+				<Time TimeType="Single" Value="360000.000000" />
+				<Topology Reference="XML">/Xdmf/Domain/Topology[1]</Topology>
+				<Geometry Reference="XML">/Xdmf/Domain/Geometry[1]</Geometry>
+				<Attribute AttributeType="Scalar" Center="Cell" Name="water_depth">
+					<DataItem ItemType="Function" Function="$0-$1" Dimensions="1038443 1">
+						<DataItem ItemType="HyperSlab" Dimensions="1038443 1">
+							<DataItem Dimensions="3 2" Format="XML">0 0 1 1 1038443 1</DataItem>
+							<DataItem Format="HDF" Rank="2" Dimensions="1038443 3">minimum_scalini_results.h5:/RESULTS/CellsAll/HydState/0000010</DataItem>
+						</DataItem>
+						<DataItem ItemType="HyperSlab" Dimensions="1038443 1">
+							<DataItem Dimensions="3 2" Format="XML">0 0 1 1 1038443 1</DataItem>
+							<DataItem Format="HDF" Rank="2" Dimensions="1038443 1">minimum_scalini_results.h5:CellsAll/BottomEl</DataItem>
+						</DataItem>
+					</DataItem>
+				</Attribute>
+				<Attribute AttributeType="Scalar" Center="Cell" Name="ns_hyd_discharge">
+					<DataItem ItemType="HyperSlab" Dimensions="1038443 1">
+						<DataItem Dimensions="3 2" Format="XML">0 1 1 1 1038443 1</DataItem>
+						<DataItem Format="HDF" Rank="2" Dimensions="1038443 30">minimum_scalini_results.h5:/RESULTS/NodeStrg/StateVar/0000010</DataItem>
+					</DataItem>
+				</Attribute>
+				<Attribute AttributeType="Scalar" Center="Cell" Name="flow_velocity_abs">
+					<DataItem ItemType="HyperSlab" Dimensions="1038443 1">
+						<DataItem Dimensions="3 2" Format="XML">0 0 1 1 1038443 1</DataItem>
+						<DataItem Format="HDF" Rank="2" Dimensions="1038443 1">minimum_scalini_results_aux.h5:flow_velocity_abs/10</DataItem>
+					</DataItem>
+				</Attribute>
+			</Grid>
+			<Grid GridType="Uniform" Name="@396000.000000">
+				<Time TimeType="Single" Value="396000.000000" />
+				<Topology Reference="XML">/Xdmf/Domain/Topology[1]</Topology>
+				<Geometry Reference="XML">/Xdmf/Domain/Geometry[1]</Geometry>
+				<Attribute AttributeType="Scalar" Center="Cell" Name="water_depth">
+					<DataItem ItemType="Function" Function="$0-$1" Dimensions="1038443 1">
+						<DataItem ItemType="HyperSlab" Dimensions="1038443 1">
+							<DataItem Dimensions="3 2" Format="XML">0 0 1 1 1038443 1</DataItem>
+							<DataItem Format="HDF" Rank="2" Dimensions="1038443 3">minimum_scalini_results.h5:/RESULTS/CellsAll/HydState/0000011</DataItem>
+						</DataItem>
+						<DataItem ItemType="HyperSlab" Dimensions="1038443 1">
+							<DataItem Dimensions="3 2" Format="XML">0 0 1 1 1038443 1</DataItem>
+							<DataItem Format="HDF" Rank="2" Dimensions="1038443 1">minimum_scalini_results.h5:CellsAll/BottomEl</DataItem>
+						</DataItem>
+					</DataItem>
+				</Attribute>
+				<Attribute AttributeType="Scalar" Center="Cell" Name="ns_hyd_discharge">
+					<DataItem ItemType="HyperSlab" Dimensions="1038443 1">
+						<DataItem Dimensions="3 2" Format="XML">0 1 1 1 1038443 1</DataItem>
+						<DataItem Format="HDF" Rank="2" Dimensions="1038443 30">minimum_scalini_results.h5:/RESULTS/NodeStrg/StateVar/0000011</DataItem>
+					</DataItem>
+				</Attribute>
+				<Attribute AttributeType="Scalar" Center="Cell" Name="flow_velocity_abs">
+					<DataItem ItemType="HyperSlab" Dimensions="1038443 1">
+						<DataItem Dimensions="3 2" Format="XML">0 0 1 1 1038443 1</DataItem>
+						<DataItem Format="HDF" Rank="2" Dimensions="1038443 1">minimum_scalini_results_aux.h5:flow_velocity_abs/11</DataItem>
+					</DataItem>
+				</Attribute>
+			</Grid>
+			<Grid GridType="Uniform" Name="@432000.000000">
+				<Time TimeType="Single" Value="432000.000000" />
+				<Topology Reference="XML">/Xdmf/Domain/Topology[1]</Topology>
+				<Geometry Reference="XML">/Xdmf/Domain/Geometry[1]</Geometry>
+				<Attribute AttributeType="Scalar" Center="Cell" Name="water_depth">
+					<DataItem ItemType="Function" Function="$0-$1" Dimensions="1038443 1">
+						<DataItem ItemType="HyperSlab" Dimensions="1038443 1">
+							<DataItem Dimensions="3 2" Format="XML">0 0 1 1 1038443 1</DataItem>
+							<DataItem Format="HDF" Rank="2" Dimensions="1038443 3">minimum_scalini_results.h5:/RESULTS/CellsAll/HydState/0000012</DataItem>
+						</DataItem>
+						<DataItem ItemType="HyperSlab" Dimensions="1038443 1">
+							<DataItem Dimensions="3 2" Format="XML">0 0 1 1 1038443 1</DataItem>
+							<DataItem Format="HDF" Rank="2" Dimensions="1038443 1">minimum_scalini_results.h5:CellsAll/BottomEl</DataItem>
+						</DataItem>
+					</DataItem>
+				</Attribute>
+				<Attribute AttributeType="Scalar" Center="Cell" Name="ns_hyd_discharge">
+					<DataItem ItemType="HyperSlab" Dimensions="1038443 1">
+						<DataItem Dimensions="3 2" Format="XML">0 1 1 1 1038443 1</DataItem>
+						<DataItem Format="HDF" Rank="2" Dimensions="1038443 30">minimum_scalini_results.h5:/RESULTS/NodeStrg/StateVar/0000012</DataItem>
+					</DataItem>
+				</Attribute>
+				<Attribute AttributeType="Scalar" Center="Cell" Name="flow_velocity_abs">
+					<DataItem ItemType="HyperSlab" Dimensions="1038443 1">
+						<DataItem Dimensions="3 2" Format="XML">0 0 1 1 1038443 1</DataItem>
+						<DataItem Format="HDF" Rank="2" Dimensions="1038443 1">minimum_scalini_results_aux.h5:flow_velocity_abs/12</DataItem>
+					</DataItem>
+				</Attribute>
+			</Grid>
+			<Grid GridType="Uniform" Name="@468000.000000">
+				<Time TimeType="Single" Value="468000.000000" />
+				<Topology Reference="XML">/Xdmf/Domain/Topology[1]</Topology>
+				<Geometry Reference="XML">/Xdmf/Domain/Geometry[1]</Geometry>
+				<Attribute AttributeType="Scalar" Center="Cell" Name="water_depth">
+					<DataItem ItemType="Function" Function="$0-$1" Dimensions="1038443 1">
+						<DataItem ItemType="HyperSlab" Dimensions="1038443 1">
+							<DataItem Dimensions="3 2" Format="XML">0 0 1 1 1038443 1</DataItem>
+							<DataItem Format="HDF" Rank="2" Dimensions="1038443 3">minimum_scalini_results.h5:/RESULTS/CellsAll/HydState/0000013</DataItem>
+						</DataItem>
+						<DataItem ItemType="HyperSlab" Dimensions="1038443 1">
+							<DataItem Dimensions="3 2" Format="XML">0 0 1 1 1038443 1</DataItem>
+							<DataItem Format="HDF" Rank="2" Dimensions="1038443 1">minimum_scalini_results.h5:CellsAll/BottomEl</DataItem>
+						</DataItem>
+					</DataItem>
+				</Attribute>
+				<Attribute AttributeType="Scalar" Center="Cell" Name="ns_hyd_discharge">
+					<DataItem ItemType="HyperSlab" Dimensions="1038443 1">
+						<DataItem Dimensions="3 2" Format="XML">0 1 1 1 1038443 1</DataItem>
+						<DataItem Format="HDF" Rank="2" Dimensions="1038443 30">minimum_scalini_results.h5:/RESULTS/NodeStrg/StateVar/0000013</DataItem>
+					</DataItem>
+				</Attribute>
+				<Attribute AttributeType="Scalar" Center="Cell" Name="flow_velocity_abs">
+					<DataItem ItemType="HyperSlab" Dimensions="1038443 1">
+						<DataItem Dimensions="3 2" Format="XML">0 0 1 1 1038443 1</DataItem>
+						<DataItem Format="HDF" Rank="2" Dimensions="1038443 1">minimum_scalini_results_aux.h5:flow_velocity_abs/13</DataItem>
+					</DataItem>
+				</Attribute>
+			</Grid>
+			<Grid GridType="Uniform" Name="@504000.000000">
+				<Time TimeType="Single" Value="504000.000000" />
+				<Topology Reference="XML">/Xdmf/Domain/Topology[1]</Topology>
+				<Geometry Reference="XML">/Xdmf/Domain/Geometry[1]</Geometry>
+				<Attribute AttributeType="Scalar" Center="Cell" Name="water_depth">
+					<DataItem ItemType="Function" Function="$0-$1" Dimensions="1038443 1">
+						<DataItem ItemType="HyperSlab" Dimensions="1038443 1">
+							<DataItem Dimensions="3 2" Format="XML">0 0 1 1 1038443 1</DataItem>
+							<DataItem Format="HDF" Rank="2" Dimensions="1038443 3">minimum_scalini_results.h5:/RESULTS/CellsAll/HydState/0000014</DataItem>
+						</DataItem>
+						<DataItem ItemType="HyperSlab" Dimensions="1038443 1">
+							<DataItem Dimensions="3 2" Format="XML">0 0 1 1 1038443 1</DataItem>
+							<DataItem Format="HDF" Rank="2" Dimensions="1038443 1">minimum_scalini_results.h5:CellsAll/BottomEl</DataItem>
+						</DataItem>
+					</DataItem>
+				</Attribute>
+				<Attribute AttributeType="Scalar" Center="Cell" Name="ns_hyd_discharge">
+					<DataItem ItemType="HyperSlab" Dimensions="1038443 1">
+						<DataItem Dimensions="3 2" Format="XML">0 1 1 1 1038443 1</DataItem>
+						<DataItem Format="HDF" Rank="2" Dimensions="1038443 30">minimum_scalini_results.h5:/RESULTS/NodeStrg/StateVar/0000014</DataItem>
+					</DataItem>
+				</Attribute>
+				<Attribute AttributeType="Scalar" Center="Cell" Name="flow_velocity_abs">
+					<DataItem ItemType="HyperSlab" Dimensions="1038443 1">
+						<DataItem Dimensions="3 2" Format="XML">0 0 1 1 1038443 1</DataItem>
+						<DataItem Format="HDF" Rank="2" Dimensions="1038443 1">minimum_scalini_results_aux.h5:flow_velocity_abs/14</DataItem>
+					</DataItem>
+				</Attribute>
+			</Grid>
+			<Grid GridType="Uniform" Name="@540000.000000">
+				<Time TimeType="Single" Value="540000.000000" />
+				<Topology Reference="XML">/Xdmf/Domain/Topology[1]</Topology>
+				<Geometry Reference="XML">/Xdmf/Domain/Geometry[1]</Geometry>
+				<Attribute AttributeType="Scalar" Center="Cell" Name="water_depth">
+					<DataItem ItemType="Function" Function="$0-$1" Dimensions="1038443 1">
+						<DataItem ItemType="HyperSlab" Dimensions="1038443 1">
+							<DataItem Dimensions="3 2" Format="XML">0 0 1 1 1038443 1</DataItem>
+							<DataItem Format="HDF" Rank="2" Dimensions="1038443 3">minimum_scalini_results.h5:/RESULTS/CellsAll/HydState/0000015</DataItem>
+						</DataItem>
+						<DataItem ItemType="HyperSlab" Dimensions="1038443 1">
+							<DataItem Dimensions="3 2" Format="XML">0 0 1 1 1038443 1</DataItem>
+							<DataItem Format="HDF" Rank="2" Dimensions="1038443 1">minimum_scalini_results.h5:CellsAll/BottomEl</DataItem>
+						</DataItem>
+					</DataItem>
+				</Attribute>
+				<Attribute AttributeType="Scalar" Center="Cell" Name="ns_hyd_discharge">
+					<DataItem ItemType="HyperSlab" Dimensions="1038443 1">
+						<DataItem Dimensions="3 2" Format="XML">0 1 1 1 1038443 1</DataItem>
+						<DataItem Format="HDF" Rank="2" Dimensions="1038443 30">minimum_scalini_results.h5:/RESULTS/NodeStrg/StateVar/0000015</DataItem>
+					</DataItem>
+				</Attribute>
+				<Attribute AttributeType="Scalar" Center="Cell" Name="flow_velocity_abs">
+					<DataItem ItemType="HyperSlab" Dimensions="1038443 1">
+						<DataItem Dimensions="3 2" Format="XML">0 0 1 1 1038443 1</DataItem>
+						<DataItem Format="HDF" Rank="2" Dimensions="1038443 1">minimum_scalini_results_aux.h5:flow_velocity_abs/15</DataItem>
+					</DataItem>
+				</Attribute>
+			</Grid>
+			<Grid GridType="Uniform" Name="@576000.000000">
+				<Time TimeType="Single" Value="576000.000000" />
+				<Topology Reference="XML">/Xdmf/Domain/Topology[1]</Topology>
+				<Geometry Reference="XML">/Xdmf/Domain/Geometry[1]</Geometry>
+				<Attribute AttributeType="Scalar" Center="Cell" Name="water_depth">
+					<DataItem ItemType="Function" Function="$0-$1" Dimensions="1038443 1">
+						<DataItem ItemType="HyperSlab" Dimensions="1038443 1">
+							<DataItem Dimensions="3 2" Format="XML">0 0 1 1 1038443 1</DataItem>
+							<DataItem Format="HDF" Rank="2" Dimensions="1038443 3">minimum_scalini_results.h5:/RESULTS/CellsAll/HydState/0000016</DataItem>
+						</DataItem>
+						<DataItem ItemType="HyperSlab" Dimensions="1038443 1">
+							<DataItem Dimensions="3 2" Format="XML">0 0 1 1 1038443 1</DataItem>
+							<DataItem Format="HDF" Rank="2" Dimensions="1038443 1">minimum_scalini_results.h5:CellsAll/BottomEl</DataItem>
+						</DataItem>
+					</DataItem>
+				</Attribute>
+				<Attribute AttributeType="Scalar" Center="Cell" Name="ns_hyd_discharge">
+					<DataItem ItemType="HyperSlab" Dimensions="1038443 1">
+						<DataItem Dimensions="3 2" Format="XML">0 1 1 1 1038443 1</DataItem>
+						<DataItem Format="HDF" Rank="2" Dimensions="1038443 30">minimum_scalini_results.h5:/RESULTS/NodeStrg/StateVar/0000016</DataItem>
+					</DataItem>
+				</Attribute>
+				<Attribute AttributeType="Scalar" Center="Cell" Name="flow_velocity_abs">
+					<DataItem ItemType="HyperSlab" Dimensions="1038443 1">
+						<DataItem Dimensions="3 2" Format="XML">0 0 1 1 1038443 1</DataItem>
+						<DataItem Format="HDF" Rank="2" Dimensions="1038443 1">minimum_scalini_results_aux.h5:flow_velocity_abs/16</DataItem>
+					</DataItem>
+				</Attribute>
+			</Grid>
+			<Grid GridType="Uniform" Name="@612000.000000">
+				<Time TimeType="Single" Value="612000.000000" />
+				<Topology Reference="XML">/Xdmf/Domain/Topology[1]</Topology>
+				<Geometry Reference="XML">/Xdmf/Domain/Geometry[1]</Geometry>
+				<Attribute AttributeType="Scalar" Center="Cell" Name="water_depth">
+					<DataItem ItemType="Function" Function="$0-$1" Dimensions="1038443 1">
+						<DataItem ItemType="HyperSlab" Dimensions="1038443 1">
+							<DataItem Dimensions="3 2" Format="XML">0 0 1 1 1038443 1</DataItem>
+							<DataItem Format="HDF" Rank="2" Dimensions="1038443 3">minimum_scalini_results.h5:/RESULTS/CellsAll/HydState/0000017</DataItem>
+						</DataItem>
+						<DataItem ItemType="HyperSlab" Dimensions="1038443 1">
+							<DataItem Dimensions="3 2" Format="XML">0 0 1 1 1038443 1</DataItem>
+							<DataItem Format="HDF" Rank="2" Dimensions="1038443 1">minimum_scalini_results.h5:CellsAll/BottomEl</DataItem>
+						</DataItem>
+					</DataItem>
+				</Attribute>
+				<Attribute AttributeType="Scalar" Center="Cell" Name="ns_hyd_discharge">
+					<DataItem ItemType="HyperSlab" Dimensions="1038443 1">
+						<DataItem Dimensions="3 2" Format="XML">0 1 1 1 1038443 1</DataItem>
+						<DataItem Format="HDF" Rank="2" Dimensions="1038443 30">minimum_scalini_results.h5:/RESULTS/NodeStrg/StateVar/0000017</DataItem>
+					</DataItem>
+				</Attribute>
+				<Attribute AttributeType="Scalar" Center="Cell" Name="flow_velocity_abs">
+					<DataItem ItemType="HyperSlab" Dimensions="1038443 1">
+						<DataItem Dimensions="3 2" Format="XML">0 0 1 1 1038443 1</DataItem>
+						<DataItem Format="HDF" Rank="2" Dimensions="1038443 1">minimum_scalini_results_aux.h5:flow_velocity_abs/17</DataItem>
+					</DataItem>
+				</Attribute>
+			</Grid>
+			<Grid GridType="Uniform" Name="@648000.000000">
+				<Time TimeType="Single" Value="648000.000000" />
+				<Topology Reference="XML">/Xdmf/Domain/Topology[1]</Topology>
+				<Geometry Reference="XML">/Xdmf/Domain/Geometry[1]</Geometry>
+				<Attribute AttributeType="Scalar" Center="Cell" Name="water_depth">
+					<DataItem ItemType="Function" Function="$0-$1" Dimensions="1038443 1">
+						<DataItem ItemType="HyperSlab" Dimensions="1038443 1">
+							<DataItem Dimensions="3 2" Format="XML">0 0 1 1 1038443 1</DataItem>
+							<DataItem Format="HDF" Rank="2" Dimensions="1038443 3">minimum_scalini_results.h5:/RESULTS/CellsAll/HydState/0000018</DataItem>
+						</DataItem>
+						<DataItem ItemType="HyperSlab" Dimensions="1038443 1">
+							<DataItem Dimensions="3 2" Format="XML">0 0 1 1 1038443 1</DataItem>
+							<DataItem Format="HDF" Rank="2" Dimensions="1038443 1">minimum_scalini_results.h5:CellsAll/BottomEl</DataItem>
+						</DataItem>
+					</DataItem>
+				</Attribute>
+				<Attribute AttributeType="Scalar" Center="Cell" Name="ns_hyd_discharge">
+					<DataItem ItemType="HyperSlab" Dimensions="1038443 1">
+						<DataItem Dimensions="3 2" Format="XML">0 1 1 1 1038443 1</DataItem>
+						<DataItem Format="HDF" Rank="2" Dimensions="1038443 30">minimum_scalini_results.h5:/RESULTS/NodeStrg/StateVar/0000018</DataItem>
+					</DataItem>
+				</Attribute>
+				<Attribute AttributeType="Scalar" Center="Cell" Name="flow_velocity_abs">
+					<DataItem ItemType="HyperSlab" Dimensions="1038443 1">
+						<DataItem Dimensions="3 2" Format="XML">0 0 1 1 1038443 1</DataItem>
+						<DataItem Format="HDF" Rank="2" Dimensions="1038443 1">minimum_scalini_results_aux.h5:flow_velocity_abs/18</DataItem>
+					</DataItem>
+				</Attribute>
+			</Grid>
+			<Grid GridType="Uniform" Name="@684000.000000">
+				<Time TimeType="Single" Value="684000.000000" />
+				<Topology Reference="XML">/Xdmf/Domain/Topology[1]</Topology>
+				<Geometry Reference="XML">/Xdmf/Domain/Geometry[1]</Geometry>
+				<Attribute AttributeType="Scalar" Center="Cell" Name="water_depth">
+					<DataItem ItemType="Function" Function="$0-$1" Dimensions="1038443 1">
+						<DataItem ItemType="HyperSlab" Dimensions="1038443 1">
+							<DataItem Dimensions="3 2" Format="XML">0 0 1 1 1038443 1</DataItem>
+							<DataItem Format="HDF" Rank="2" Dimensions="1038443 3">minimum_scalini_results.h5:/RESULTS/CellsAll/HydState/0000019</DataItem>
+						</DataItem>
+						<DataItem ItemType="HyperSlab" Dimensions="1038443 1">
+							<DataItem Dimensions="3 2" Format="XML">0 0 1 1 1038443 1</DataItem>
+							<DataItem Format="HDF" Rank="2" Dimensions="1038443 1">minimum_scalini_results.h5:CellsAll/BottomEl</DataItem>
+						</DataItem>
+					</DataItem>
+				</Attribute>
+				<Attribute AttributeType="Scalar" Center="Cell" Name="ns_hyd_discharge">
+					<DataItem ItemType="HyperSlab" Dimensions="1038443 1">
+						<DataItem Dimensions="3 2" Format="XML">0 1 1 1 1038443 1</DataItem>
+						<DataItem Format="HDF" Rank="2" Dimensions="1038443 30">minimum_scalini_results.h5:/RESULTS/NodeStrg/StateVar/0000019</DataItem>
+					</DataItem>
+				</Attribute>
+				<Attribute AttributeType="Scalar" Center="Cell" Name="flow_velocity_abs">
+					<DataItem ItemType="HyperSlab" Dimensions="1038443 1">
+						<DataItem Dimensions="3 2" Format="XML">0 0 1 1 1038443 1</DataItem>
+						<DataItem Format="HDF" Rank="2" Dimensions="1038443 1">minimum_scalini_results_aux.h5:flow_velocity_abs/19</DataItem>
+					</DataItem>
+				</Attribute>
+			</Grid>
+			<Grid GridType="Uniform" Name="@720000.000000">
+				<Time TimeType="Single" Value="720000.000000" />
+				<Topology Reference="XML">/Xdmf/Domain/Topology[1]</Topology>
+				<Geometry Reference="XML">/Xdmf/Domain/Geometry[1]</Geometry>
+				<Attribute AttributeType="Scalar" Center="Cell" Name="water_depth">
+					<DataItem ItemType="Function" Function="$0-$1" Dimensions="1038443 1">
+						<DataItem ItemType="HyperSlab" Dimensions="1038443 1">
+							<DataItem Dimensions="3 2" Format="XML">0 0 1 1 1038443 1</DataItem>
+							<DataItem Format="HDF" Rank="2" Dimensions="1038443 3">minimum_scalini_results.h5:/RESULTS/CellsAll/HydState/0000020</DataItem>
+						</DataItem>
+						<DataItem ItemType="HyperSlab" Dimensions="1038443 1">
+							<DataItem Dimensions="3 2" Format="XML">0 0 1 1 1038443 1</DataItem>
+							<DataItem Format="HDF" Rank="2" Dimensions="1038443 1">minimum_scalini_results.h5:CellsAll/BottomEl</DataItem>
+						</DataItem>
+					</DataItem>
+				</Attribute>
+				<Attribute AttributeType="Scalar" Center="Cell" Name="ns_hyd_discharge">
+					<DataItem ItemType="HyperSlab" Dimensions="1038443 1">
+						<DataItem Dimensions="3 2" Format="XML">0 1 1 1 1038443 1</DataItem>
+						<DataItem Format="HDF" Rank="2" Dimensions="1038443 30">minimum_scalini_results.h5:/RESULTS/NodeStrg/StateVar/0000020</DataItem>
+					</DataItem>
+				</Attribute>
+				<Attribute AttributeType="Scalar" Center="Cell" Name="flow_velocity_abs">
+					<DataItem ItemType="HyperSlab" Dimensions="1038443 1">
+						<DataItem Dimensions="3 2" Format="XML">0 0 1 1 1038443 1</DataItem>
+						<DataItem Format="HDF" Rank="2" Dimensions="1038443 1">minimum_scalini_results_aux.h5:flow_velocity_abs/20</DataItem>
+					</DataItem>
+				</Attribute>
+			</Grid>
+			<Grid GridType="Uniform" Name="@756000.000000">
+				<Time TimeType="Single" Value="756000.000000" />
+				<Topology Reference="XML">/Xdmf/Domain/Topology[1]</Topology>
+				<Geometry Reference="XML">/Xdmf/Domain/Geometry[1]</Geometry>
+				<Attribute AttributeType="Scalar" Center="Cell" Name="water_depth">
+					<DataItem ItemType="Function" Function="$0-$1" Dimensions="1038443 1">
+						<DataItem ItemType="HyperSlab" Dimensions="1038443 1">
+							<DataItem Dimensions="3 2" Format="XML">0 0 1 1 1038443 1</DataItem>
+							<DataItem Format="HDF" Rank="2" Dimensions="1038443 3">minimum_scalini_results.h5:/RESULTS/CellsAll/HydState/0000021</DataItem>
+						</DataItem>
+						<DataItem ItemType="HyperSlab" Dimensions="1038443 1">
+							<DataItem Dimensions="3 2" Format="XML">0 0 1 1 1038443 1</DataItem>
+							<DataItem Format="HDF" Rank="2" Dimensions="1038443 1">minimum_scalini_results.h5:CellsAll/BottomEl</DataItem>
+						</DataItem>
+					</DataItem>
+				</Attribute>
+				<Attribute AttributeType="Scalar" Center="Cell" Name="ns_hyd_discharge">
+					<DataItem ItemType="HyperSlab" Dimensions="1038443 1">
+						<DataItem Dimensions="3 2" Format="XML">0 1 1 1 1038443 1</DataItem>
+						<DataItem Format="HDF" Rank="2" Dimensions="1038443 30">minimum_scalini_results.h5:/RESULTS/NodeStrg/StateVar/0000021</DataItem>
+					</DataItem>
+				</Attribute>
+				<Attribute AttributeType="Scalar" Center="Cell" Name="flow_velocity_abs">
+					<DataItem ItemType="HyperSlab" Dimensions="1038443 1">
+						<DataItem Dimensions="3 2" Format="XML">0 0 1 1 1038443 1</DataItem>
+						<DataItem Format="HDF" Rank="2" Dimensions="1038443 1">minimum_scalini_results_aux.h5:flow_velocity_abs/21</DataItem>
+					</DataItem>
+				</Attribute>
+			</Grid>
+		</Grid>
+	</Domain>
+</Xdmf>

@@ -1,18 +1,18 @@
 using Plots, Plots.Measures, Printf, CSV, DataFrames, Infiltrator, HDF5
 
-# Caso da elaborare (lanciare dalla cartella 1D_Brenta). La cartella di input contiene i file delle
+# Caso da elaborare. I percorsi sono relativi alla cartella del progetto (calcolo_tabelle_2Dto1D),
+# quindi lo script si può lanciare da qualsiasi cartella. La cartella di input contiene i file delle
 # sezioni (FilePrefix*nome*Format), centerpoints.csv, bankpoints.csv, la mesh del modello 2D (MeshFile)
 # e i suoi risultati (ResultsFile), da cui si calcola β.
 # β calcolato dal modello 2D (true) oppure β = 1 (false); con β = 1 mesh e risultati 2D non servono.
-# Il modello usa le tabelle con β = 1 (input/geometria/Test_Brenta/S_50m): con β dal 2D i risultati
-# cambiano poco, quindi quelle tabelle sono tenute da parte (input/geometria/Test_Brenta/S_50m_beta).
+# Normalmente si usa β = 1; le tabelle con β dal 2D vanno in una cartella separata (suffisso "_beta")
+# per non sovrascrivere quelle con β = 1.
 const β_dal_2D = false
+const ProjectFolder = normpath(joinpath(@__DIR__, ".."))
 # Sezioni ogni 50 m
-const InputFolder = "calcolo_tabelle_daBM/input/S_0050_6000_q2"
-const OutputFolder = β_dal_2D ? "calcolo_tabelle_daBM/output/S_50m_q2" : "calcolo_tabelle_daBM/output/S_50m_q2"
-# Cartella degli input del modello 1D: tabella_sezioni.csv e localslope_xcoord.csv vengono scritti anche qui,
-# così il modello usa sempre le tabelle appena calcolate (righe 1-2 di settings.txt)
-const ModelFolder = β_dal_2D ? "input/geometria/Test_Brenta/S_50m_q2" : "input/geometria/Test_Brenta/S_50m_q2"
+const InputFolder = joinpath(ProjectFolder, "input", "S_0050_6000_q2")
+const OutputName = "S_50m_q2"
+const OutputFolder = joinpath(ProjectFolder, "output", β_dal_2D ? OutputName*"_beta" : OutputName)
 const FilePrefix = "ns_50_scalini_"
 const MeshFile = "test_brenta_ns_50_computational-mesh.2dm"
 const ResultsFile = "ns_50_scalini_results.h5"
@@ -51,7 +51,7 @@ function check_input_files()
         end
     end
     isempty(mancanti) && return nothing
-    msg = "AVVISO: mancano $(length(mancanti)) file di input (la cartella di lavoro deve essere 1D_Brenta):\n  " *
+    msg = "AVVISO: mancano $(length(mancanti)) file di input:\n  " *
           join(mancanti, "\n  ")
     printstyled(msg, "\n"; color=:red, bold=true)
     error("File di input mancanti: elaborazione interrotta")
@@ -66,7 +66,10 @@ end
 function load_section(InputPath)
     data = CSV.read(InputPath, DataFrame)
     wet = data[!, "Wetted area [m2]"] .> 0.0
-    zref = data[2, "Reference elevation [m]"]
+    # quota di riferimento dalla prima riga bagnata: in quelle asciutte BASEMENT scrive 0
+    k1 = findfirst(wet)
+    k1 === nothing && error("$InputPath: la sezione è asciutta in tutte le righe")
+    zref = data[k1, "Reference elevation [m]"]
     data[.!wet, "Reference elevation [m]"] .= zref
     data[.!wet, "Mean bottom elevation [m]"] .= zref
     data[.!wet, "Mean wse [m]"] .= zref
@@ -516,9 +519,7 @@ function main(; dosave::Bool=false, doplot::Bool=false)
     tabella_unica = reduce(vcat, [model_table(tabelle[nome], j) for (j, nome) in enumerate(nomi)])
     if dosave
         mkpath(OutputFolder)
-        mkpath(ModelFolder)
         CSV.write(joinpath(OutputFolder, "tabella_sezioni"*Format), tabella_unica)
-        CSV.write(joinpath(ModelFolder, "tabella_sezioni"*Format), tabella_unica)
     end
 
     # quote degli argini destro e sinistro di ogni sezione, dai punti in bankpoints.csv
@@ -531,8 +532,7 @@ function main(; dosave::Bool=false, doplot::Bool=false)
         "argine_dx_[m]" => argine_dx, "argine_sx_[m]" => argine_sx)
     if dosave
         CSV.write(joinpath(OutputFolder, "localslope_xcoord"*Format), geometria)
-        CSV.write(joinpath(ModelFolder, "localslope_xcoord"*Format), geometria)
-        println("Tabelle e geometria scritte in $OutputFolder e in $ModelFolder")
+        println("Tabelle e geometria scritte in $OutputFolder")
     end
 
     println("\nControlli: $(length(avvisi)) valori fuori dai limiti")
