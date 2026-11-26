@@ -25,6 +25,18 @@ const OutputDefault = "S_50m_q2"
 # Normalmente si usa β = 1; le tabelle con β dal 2D vanno in una cartella separata (suffisso "_beta")
 # per non sovrascrivere quelle con β = 1.
 const β_dal_2D = false
+# Salva anche una cartella per ogni sezione, con la sua tabella e i grafici (true), oppure solo i file
+# riassuntivi (false): con centinaia di sezioni le cartelle sono troppe.
+const CartelleSezioni = false
+# Con più aste: un'unica tabella_sezioni.csv e un unico localslope_xcoord.csv per tutte le aste (true),
+# con le aste una dopo l'altra in ordine alfabetico del nome e il numero progressivo delle sezioni che
+# continua da un'asta alla successiva, oppure una sottocartella per asta (false).
+# Il numero progressivo di ogni sezione è sempre riportato in topologia_sezioni.csv con il suo nome.
+const AsteUnite = true
+# Sezioni di centerpoints.csv senza il file dei risultati: escluse con un avviso (true), oppure
+# elaborazione interrotta (false). Le sezioni escluse non devono essere in mezzo a un'asta, altrimenti
+# le pendenze sono calcolate su una distanza più lunga.
+const SaltaSezioniSenzaFile = true
 const ProjectFolder = normpath(joinpath(@__DIR__, ".."))
 
 if any(in(("-h", "--help")), ARGS) || length(ARGS) > 2
@@ -151,8 +163,9 @@ end
 #= CONTROLLO DEI FILE DI INPUT
     Prima di elaborare controlla che ci siano tutti i file: quelli fissi della cartella di input (mesh e
     risultati 2D solo se β viene dal 2D) e quelli delle sezioni elencate in centerpoints.csv. Se ne manca
-    qualcuno li elenca tutti e si ferma. Restituisce il prefisso dei file delle sezioni e i nomi dei file
-    di mesh e risultati 2D (nothing se β = 1).
+    qualcuno li elenca tutti e si ferma; con SaltaSezioniSenzaFile, le sezioni senza file sono solo
+    segnalate. Restituisce il prefisso dei file delle sezioni, i nomi dei file di mesh e risultati 2D
+    (nothing se β = 1) e i nomi delle sezioni da escludere.
 =#
 function check_input_files()
     if !isdir(InputFolder)
@@ -166,20 +179,23 @@ function check_input_files()
     end
     sezioni = joinpath(InputFolder, "centerpoints.csv")
     FilePrefix = ""
+    saltate = String[]
     if isfile(sezioni)
         # prima controlla il contenuto di centerpoints.csv (nomi, ascisse, aste), poi i file delle sezioni
         nomi = reduce(vcat, [String.(sez[!, "nome"]) for (_, sez) in read_reaches()])
         FilePrefix = find_file_prefix(nomi)
         for nome in nomi
             f = joinpath(InputFolder, FilePrefix*nome*Format)
-            isfile(f) || push!(mancanti, f)
+            isfile(f) || push!(SaltaSezioniSenzaFile ? saltate : mancanti, SaltaSezioniSenzaFile ? nome : f)
         end
     end
+    isempty(saltate) || printstyled("AVVISO: $(length(saltate)) sezioni di centerpoints.csv non hanno il file dei " *
+        "risultati e sono escluse:\n  " * join(saltate, ", ") * "\n"; color=:yellow, bold=true)
     isempty(mancanti) || stop_with("AVVISO: mancano $(length(mancanti)) file di input:\n  " * join(mancanti, "\n  "),
                                    "File di input mancanti: elaborazione interrotta")
     MeshFile = β_dal_2D ? find_unique_file(".2dm", "di mesh") : nothing
     ResultsFile = β_dal_2D ? find_unique_file("results.h5", "dei risultati 2D") : nothing
-    return FilePrefix, MeshFile, ResultsFile
+    return FilePrefix, MeshFile, ResultsFile, Set(saltate)
 end
 
 function slope!(slope, y, x)
@@ -586,7 +602,7 @@ end
 =#
 reach_name(nome) = (m = match(r"^(.*?)\d+$", String(nome)); m === nothing ? nothing : String(m[1]))
 
-function read_reaches()
+function read_reaches(escludi=Set{String}())
     path = joinpath(InputFolder, "centerpoints.csv")
     cp = read_input_table(path, COLONNE_CENTERPOINTS, ESEMPIO_CENTERPOINTS)
     problemi = String[]
@@ -603,6 +619,7 @@ function read_reaches()
     end
     isempty(problemi) || stop_with("ERRORE nel file $path\n  " * join(problemi, "\n  "),
                                    "centerpoints.csv non valido: elaborazione interrotta")
+    cp = cp[.!in.(cp[!, "nome"], Ref(escludi)), :]
     cp[!, "asta"] = reach_name.(cp[!, "nome"])
     reaches = Tuple{String,DataFrame}[]
     for asta in sort(unique(cp[!, "asta"]))
@@ -730,7 +747,7 @@ function process_reach(sections_all, Folder, FilePrefix, MeshFile, ResultsFile, 
         # salva tabella e grafici solo se la tabella è diversa da quella già salvata
         SecFolder = joinpath(Folder, nome)
         TablePath = joinpath(SecFolder, "tabella"*Format)
-        salva = dosave && !(isfile(TablePath) && isequal(CSV.read(TablePath, DataFrame), table))
+        salva = dosave && CartelleSezioni && !(isfile(TablePath) && isequal(CSV.read(TablePath, DataFrame), table))
         if salva
             mkpath(SecFolder)
             CSV.write(TablePath, table)
@@ -747,13 +764,22 @@ function process_reach(sections_all, Folder, FilePrefix, MeshFile, ResultsFile, 
     geometria = DataFrame("section" => eachindex(nomi), "local_slope" => local_slope,
         "x_coord_[m]" => s, "talweg_[m]" => talweg,
         "argine_dx_[m]" => argine_dx, "argine_sx_[m]" => argine_sx)
-    if dosave
-        mkpath(Folder)
-        CSV.write(joinpath(Folder, "tabella_sezioni"*Format), tabella_unica)
-        CSV.write(joinpath(Folder, "localslope_xcoord"*Format), geometria)
-        println("Tabelle e geometria scritte in $Folder")
-    end
+    dosave && write_summary(Folder, tabella_unica, geometria, nomi)
     return tabelle, tabella_unica, geometria, avvisi
+end
+
+#= Scrive in Folder i file riassuntivi: tabella unica, geometria e topologia_sezioni.csv, che associa
+    il numero progressivo delle sezioni (colonna "section", la stessa degli altri due file) al loro nome.
+=#
+function write_summary(Folder, tabella_unica, geometria, nomi)
+    topologia = DataFrame("section" => geometria[!, "section"], "nome" => nomi,
+        "asta" => reach_name.(nomi), "x_coord_[m]" => geometria[!, "x_coord_[m]"])
+    mkpath(Folder)
+    CSV.write(joinpath(Folder, "tabella_sezioni"*Format), tabella_unica)
+    CSV.write(joinpath(Folder, "localslope_xcoord"*Format), geometria)
+    CSV.write(joinpath(Folder, "topologia_sezioni"*Format), topologia)
+    println("Tabelle, geometria e topologia scritte in $Folder")
+    return nothing
 end
 
 # Quote degli argini da bankpoints.csv: controlla che ci siano entrambi i punti di ogni sezione
@@ -774,8 +800,8 @@ end
     OutputFolder/<asta> e restituisce un Dict asta => (tabelle, tabella_unica, geometria).
 =#
 function main(; dosave::Bool=false, doplot::Bool=false)
-    FilePrefix, MeshFile, ResultsFile = check_input_files()
-    reaches = read_reaches()
+    FilePrefix, MeshFile, ResultsFile, saltate = check_input_files()
+    reaches = read_reaches(saltate)
     multi = length(reaches) > 1
     println("Input:  $InputFolder (file delle sezioni: $(FilePrefix)<nome>$Format)")
     println("Output: $OutputFolder")
@@ -785,13 +811,30 @@ function main(; dosave::Bool=false, doplot::Bool=false)
 
     risultati = Dict{String,Any}()
     avvisi = String[]
+    unite = multi && AsteUnite
     for (asta, sez) in reaches
         multi && printstyled("\n== Asta $asta ==\n"; bold=true)
-        Folder = multi ? joinpath(OutputFolder, asta) : OutputFolder
+        Folder = multi && !unite ? joinpath(OutputFolder, asta) : OutputFolder
+        # con le aste unite i file riassuntivi si scrivono dopo, tutti insieme
         tabelle, tabella_unica, geometria, avvisi_asta =
-            process_reach(sez, Folder, FilePrefix, MeshFile, ResultsFile, z_argine; dosave, doplot)
+            process_reach(sez, Folder, FilePrefix, MeshFile, ResultsFile, z_argine; dosave=dosave && !unite, doplot)
         risultati[asta] = (tabelle, tabella_unica, geometria)
         append!(avvisi, multi ? ("[$asta] " .* avvisi_asta) : avvisi_asta)
+    end
+
+    # aste unite: le aste una dopo l'altra (nell'ordine di reaches, alfabetico), con il numero progressivo
+    # delle sezioni che continua da un'asta alla successiva
+    if unite && dosave
+        tabelle_aste, geometrie_aste, nomi_aste = DataFrame[], DataFrame[], String[]
+        n = 0
+        for (asta, sez) in reaches
+            _, tabella_unica, geometria = risultati[asta]
+            push!(tabelle_aste, transform(tabella_unica, :sezione => (j -> j .+ n) => :sezione))
+            push!(geometrie_aste, transform(geometria, :section => (j -> j .+ n) => :section))
+            append!(nomi_aste, String.(sez[!, "nome"]))
+            n += nrow(geometria)
+        end
+        write_summary(OutputFolder, reduce(vcat, tabelle_aste), reduce(vcat, geometrie_aste), nomi_aste)
     end
 
     println("\nControlli: $(length(avvisi)) valori fuori dai limiti")
