@@ -8,7 +8,7 @@ using Plots, Plots.Measures, Printf, CSV, DataFrames, Infiltrator, HDF5
 
 #= CASO DA ELABORARE
     Si sceglie dalla riga di comando, senza modificare questo file:
-        julia --project=. src/main.jl <cartella di input> [<cartella di output>]
+        julia --project=. src/main_sezioni.jl <cartella di input> [<cartella di output>]
     - <cartella di input>: nome di una sottocartella di input/ (es. S_0050_6000_q5; va bene anche
       "input/S_0050_6000_q5/");
     - <cartella di output>: nome della sottocartella di output/; se manca è uguale a quella di input.
@@ -41,7 +41,7 @@ const ProjectFolder = normpath(joinpath(@__DIR__, ".."))
 
 if any(in(("-h", "--help")), ARGS) || length(ARGS) > 2
     println("""
-        Uso: julia --project=. src/main.jl [<cartella di input> [<cartella di output>]]
+        Uso: julia --project=. src/main_sezioni.jl [<cartella di input> [<cartella di output>]]
           <cartella di input>   sottocartella di input/ (predefinita: $InputDefault)
           <cartella di output>  sottocartella di output/ (predefinita: uguale a quella di input;
                                 senza argomenti: $OutputDefault)

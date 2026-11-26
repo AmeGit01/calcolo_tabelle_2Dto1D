@@ -21,14 +21,15 @@ tabella in funzione del livello idrometrico (WSE) che il modello 1D può interpo
 5. [Come lanciarlo](#come-lanciarlo)
 6. [Parametri di configurazione](#parametri-di-configurazione)
 7. [Controlli e avvisi](#controlli-e-avvisi)
-8. [Struttura della cartella](#struttura-della-cartella)
-9. [Note e limitazioni](#note-e-limitazioni)
+8. [Diversione Brenta nuovo / Brenta vecchio](#diversione-brenta-nuovo--brenta-vecchio)
+9. [Struttura della cartella](#struttura-della-cartella)
+10. [Note e limitazioni](#note-e-limitazioni)
 
 ---
 
 ## Cosa fa lo script
 
-Tutto il codice è in [src/main.jl](src/main.jl). In ordine:
+Il calcolo delle tabelle è in [src/main_sezioni.jl](src/main_sezioni.jl) (la scala di deflusso della diversione è a parte, vedi [Diversione](#diversione-brenta-nuovo--brenta-vecchio)). In ordine:
 
 1. **Controllo dei file di input.** Verifica che esistano `centerpoints.csv`, `bankpoints.csv`
    e un file per ogni sezione elencata in `centerpoints.csv` (più mesh e risultati 2D se β è
@@ -369,7 +370,7 @@ julia --project=. -e 'using Pkg; Pkg.instantiate()'
 Poi si sceglie il caso dalla riga di comando, senza modificare lo script:
 
 ```bash
-julia --project=. src/main.jl <cartella di input> [<cartella di output>]
+julia --project=. src/main_sezioni.jl <cartella di input> [<cartella di output>]
 ```
 
 | Argomento | Significato |
@@ -380,10 +381,10 @@ julia --project=. src/main.jl <cartella di input> [<cartella di output>]
 Esempi:
 
 ```bash
-julia --project=. src/main.jl S_0050_6000_q5              # → output/S_0050_6000_q5
-julia --project=. src/main.jl S_0050_6000_q5 S_50m_q5     # → output/S_50m_q5
-julia --project=. src/main.jl                             # caso predefinito: S_0050_6000_q2 → output/S_50m_q2
-julia --project=. src/main.jl --help                      # uso e cartelle disponibili in input/
+julia --project=. src/main_sezioni.jl S_0050_6000_q5              # → output/S_0050_6000_q5
+julia --project=. src/main_sezioni.jl S_0050_6000_q5 S_50m_q5     # → output/S_50m_q5
+julia --project=. src/main_sezioni.jl                             # caso predefinito: S_0050_6000_q2 → output/S_50m_q2
+julia --project=. src/main_sezioni.jl --help                      # uso e cartelle disponibili in input/
 ```
 
 All'avvio lo script stampa la cartella di input, il prefisso dei file delle sezioni che ha
@@ -400,7 +401,7 @@ In alternativa, dal REPL (utile per avere i grafici a schermo). Il caso si scegl
 ```julia
 julia> ]activate .
 julia> append!(empty!(ARGS), ["S_0050_6000_q5"])   # facoltativo: senza, caso predefinito
-julia> include("src/main.jl")                      # esegue già main(; dosave=true)
+julia> include("src/main_sezioni.jl")                      # esegue già main(; dosave=true)
 julia> tabelle, tabella_unica, geometria = main(; doplot=true)   # rilancia mostrando i grafici
 ```
 
@@ -417,7 +418,7 @@ e restituisce `(tabelle, tabella_unica, geometria)`: un `Dict` nome → `DataFra
 la tabella unica e la tabella della geometria. Con più aste restituisce invece un `Dict`
 asta → `(tabelle, tabella_unica, geometria)`.
 
-> L'ultima riga di `main.jl` è `main(; dosave=true)`: con `include` o lanciandolo da terminale,
+> L'ultima riga di `main_sezioni.jl` è `main(; dosave=true)`: con `include` o lanciandolo da terminale,
 > l'elaborazione parte subito e **salva**.
 
 Con `β_dal_2D = true` viene letto anche il file HDF5 (~130 MB per `q2`): il calcolo è più lento
@@ -427,7 +428,7 @@ e richiede più memoria.
 
 ## Parametri di configurazione
 
-Sono le costanti in testa a [src/main.jl](src/main.jl). Il caso da elaborare **non** si cambia
+Sono le costanti in testa a [src/main_sezioni.jl](src/main_sezioni.jl). Il caso da elaborare **non** si cambia
 qui ma dalla riga di comando (vedi [Come lanciarlo](#come-lanciarlo)).
 
 | Costante | Significato |
@@ -474,6 +475,35 @@ all'uscita del dominio 2D. Vanno letti, non per forza eliminati.
 
 ---
 
+## Diversione Brenta nuovo / Brenta vecchio
+
+Il Brenta è a canale singolo fino alla sezione `B13200`, dove si divide nel **Brenta nuovo**
+(`B13250`, canale principale) e nel **Brenta vecchio** (`V00050`, prima sezione dell'asta V con
+risultati). Nel modello 1D le due aste sono risolte in modo indipendente: il Brenta nuovo ha una
+portata uscente verso il Brenta vecchio, ricavata dalla simulazione a scalini con
+[src/main_diversione.jl](src/main_diversione.jl):
+
+```bash
+julia --project=. src/main_diversione.jl [<cartella di input>]   # predefinita: Brenta_caldonazzo_borgo
+```
+
+Per ogni salvataggio legge la portata delle tre sezioni e scrive in
+`output/<cartella>/scala_diversione.csv` la scala di deflusso portata-portata:
+
+| Colonna | Significato |
+|---|---|
+| `salvataggio` | riga dei file delle sezioni (1 = istante iniziale, asciutto) |
+| `Q_monte_[m3/s]` | portata in arrivo da monte, a `B13200` |
+| `Q_brenta_vecchio_[m3/s]` | portata verso il Brenta vecchio, a `V00050` |
+| `Q_brenta_nuovo_[m3/s]` | portata nel Brenta nuovo, a `B13250` (solo controllo) |
+| `frazione_brenta_vecchio_[-]` | `Q_brenta_vecchio / Q_monte` |
+| `residuo_bilancio_[m3/s]` | `Q_monte − Q_nuovo − Q_vecchio` |
+
+I salvataggi con `Q_monte` non crescente sono scartati, e viene segnalato quando il bilancio non
+chiude entro il 2% di `Q_monte`. Le sezioni sono costanti in testa allo script.
+
+---
+
 ## Struttura della cartella
 
 ```
@@ -482,7 +512,8 @@ calcolo_tabelle_2Dto1D/
 ├── Project.toml          # dipendenze Julia
 ├── Manifest.toml         # versioni esatte (non versionato, vedi .gitignore)
 ├── src/
-│   └── main.jl           # tutto lo script
+│   ├── main_sezioni.jl   # tabelle delle sezioni per il modello 1D
+│   └── main_diversione.jl # scala di deflusso della diversione Brenta nuovo / Brenta vecchio
 ├── input/                # un caso per sottocartella (vedi "Input")
 └── output/               # un caso per sottocartella (vedi "Output")
 ```
