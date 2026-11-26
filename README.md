@@ -33,36 +33,41 @@ Tutto il codice è in [src/main.jl](src/main.jl). In ordine:
 1. **Controllo dei file di input.** Verifica che esistano `centerpoints.csv`, `bankpoints.csv`
    e un file per ogni sezione elencata in `centerpoints.csv` (più mesh e risultati 2D se β è
    calcolato dal 2D). Se manca qualcosa elenca tutti i file mancanti e si ferma.
-2. **Lettura delle sezioni**, ordinate da monte verso valle secondo l'ascissa curvilinea `s_m`.
-   Tutte le sezioni devono avere lo stesso numero di righe (gli stessi scalini) e, se c'è la
-   colonna del tempo, gli stessi istanti.
-3. **Pulizia delle righe asciutte.** BASEMENT scrive 0 in tutte le colonne quando la sezione è
+2. **Riconoscimento delle aste.** Le aste si ricavano dal nome delle sezioni, che è
+   `<asta><numero>`: per esempio `N00050` → asta `N`, `B17650` → asta `B`, `S0400` → asta `S`.
+   Ogni asta è elaborata come un **tratto indipendente**, con la sua ascissa `s_m` e le sue
+   tabelle (vedi [Più aste](#più-aste)).
+3. **Lettura delle sezioni** di ogni asta, ordinate da monte verso valle secondo l'ascissa
+   curvilinea `s_m`. Tutte le sezioni devono avere lo stesso numero di righe (gli stessi scalini)
+   e, se c'è la colonna del tempo, gli stessi istanti.
+4. **Pulizia delle righe asciutte.** BASEMENT scrive 0 in tutte le colonne quando la sezione è
    asciutta. Quote di riferimento, fondo e WSE di quelle righe vengono riportate alla quota di
    riferimento della sezione.
-4. **Pendenza della superficie libera** `iWSE`, per ogni sezione e per ogni scalino, dal profilo
-   dei livelli lungo l'asta allo stesso scalino:
-   - differenze centrate se le due sezioni adiacenti sono bagnate;
-   - differenza unilaterale agli estremi o se una delle adiacenti è asciutta;
-   - le pendenze nulle o negative (possibili a portate molto basse) sono sostituite con la prima
-     pendenza positiva degli scalini superiori della stessa sezione, e la sostituzione viene
-     segnalata.
-5. **Differenza di portata ΔQ** con la sezione a monte, allo stesso scalino. Rappresenta lo
+5. **Pendenze**, per ogni sezione e per ogni scalino, dal profilo lungo l'asta allo stesso
+   scalino (vedi [Pendenza dell'energia](#pendenza-dellenergia)):
+   - `iWSE`, pendenza della superficie libera, solo informativa;
+   - `J`, **pendenza dell'energia**, usata per Ks e jden;
+   - entrambe alle differenze centrate se le due sezioni adiacenti sono bagnate, con la
+     differenza unilaterale agli estremi o se una delle adiacenti è asciutta;
+   - le J nulle o negative sono interpolate in WSE fra i livelli validi della stessa sezione, e
+     ogni sostituzione viene segnalata.
+6. **Differenza di portata ΔQ** con la sezione a monte, allo stesso scalino. Rappresenta lo
    scambio con la piana (esondazione/rientro) nel tratto fra le due sezioni.
-6. **Coefficiente di quantità di moto β**: vale 1 oppure è calcolato dal campo di velocità 2D
+7. **Coefficiente di quantità di moto β**: vale 1 oppure è calcolato dal campo di velocità 2D
    (vedi [β dal modello 2D](#β-dal-modello-2d)).
-7. **Ricostruzione delle righe asciutte.** I primi scalini possono essere asciutti, perché il 2D
+8. **Ricostruzione delle righe asciutte.** I primi scalini possono essere asciutti, perché il 2D
    non è stabile a portate troppo basse. La prima riga è ricostruita con tirante `h_dry`,
    portata `Q_dry` e area ricavata da Manning imponendo `Ks_dry`. Le eventuali righe successive
    sono interpolate linearmente fino al primo scalino bagnato. Il modello 1D è pensato per le
    piene, quindi a queste righe basta essere ragionevoli.
-8. **Livelli monotoni.** Il modello 1D vuole WSE strettamente crescenti: le righe con livello non
+9. **Livelli monotoni.** Il modello 1D vuole WSE strettamente crescenti: le righe con livello non
    superiore al massimo dei precedenti vengono scartate e segnalate.
-9. **Ultima sezione (condizione di uscita).** Per l'ultima sezione `iWSE` è sostituita dalla
-   pendenza media del fondo sull'intero tratto. Così il moto uniforme che il modello 1D impone in
+10. **Ultima sezione (condizione di uscita).** Per l'ultima sezione di ogni asta `J` è
+   sostituita dalla pendenza media del fondo sull'intera asta. Così il moto uniforme che il modello 1D impone in
    uscita restituisce la portata degli scalini 2D. Vicino al bordo di valle del dominio 2D la
    pendenza del pelo libero è falsata dal richiamo dell'uscita.
-10. **Calcolo della tabella** di ogni sezione (vedi sotto) e controlli di plausibilità.
-11. **Scrittura** delle tabelle per sezione, dei grafici, della tabella unica per il modello 1D e
+11. **Calcolo della tabella** di ogni sezione (vedi sotto) e controlli di plausibilità.
+12. **Scrittura** delle tabelle per sezione, dei grafici, della tabella unica per il modello 1D e
     del file con la geometria longitudinale.
 
 ---
@@ -84,7 +89,8 @@ differenze in avanti (l'ultima riga ripete la penultima).
 | `W_s` | dW/dη | – | Derivata di W |
 | `RH` | R_H = Ω/W | m | Raggio idraulico |
 | `RH_s` | dR_H/dη | – | Derivata di R_H |
-| `iWSE` | i | – | Pendenza della superficie libera (positiva se il livello scende verso valle) |
+| `iWSE` | i | – | Pendenza della superficie libera (positiva se il livello scende verso valle); solo informativa |
+| `J` | J | – | Pendenza dell'energia (positiva se l'energia scende verso valle), usata per Ks e jden |
 | `Ks` | K_s | m^(1/3)/s | Coefficiente di Gauckler-Strickler equivalente dell'intera sezione |
 | `jden` | – | m | Denominatore del termine d'attrito del modello 1D |
 | `jden_s` | – | – | Derivata di `jden` |
@@ -93,15 +99,40 @@ differenze in avanti (l'ultima riga ripete la penultima).
 
 Formule usate:
 
-- Ks equivalente, da Manning con la portata locale della sezione:
+- Ks equivalente, da Manning con la portata locale della sezione e la pendenza dell'energia:
 
-  K_s = Q / ( Ω · R_H^(2/3) · √i )
+  K_s = Q / ( Ω · R_H^(2/3) · √J )
 
 - Denominatore dell'attrito, tale che il termine d'attrito del modello 1D sia j = u·|u| / (g·jden):
 
-  jden = K_s² · R_H^(4/3) / g
+  jden = K_s² · R_H^(4/3) / g = u² / (g·J),  con u = Q/Ω
+
+  Allo stato del 2D, quindi, il modello 1D ha come pendenza d'attrito proprio J.
 
 - ΔQ vale 0 nella prima sezione e quando una delle due sezioni è asciutta.
+
+### Pendenza dell'energia
+
+Ks e jden si ricavano dalla pendenza dell'energia
+
+J = −d/ds ( WSE + u²/2g )
+
+e non da quella del pelo libero `iWSE`. Manning/Strickler lega l'attrito alla dissipazione di
+energia, e le due pendenze coincidono solo se la velocità non cambia lungo l'asta. Dove la sezione
+si allarga la corrente rallenta e il pelo libero può risalire anche se l'energia scende: lì
+`iWSE` è nulla o negativa e non darebbe un Ks. Il termine cinetico usa α = 1 (velocità uniforme
+sulla sezione).
+
+J può comunque risultare nulla o negativa in pochi punti, per esempio dove la velocità è molto
+non uniforme sulla sezione o dove l'acqua esce o rientra lateralmente. In quei punti Ks e jden
+non sarebbero definiti, quindi J viene sostituita così:
+1. interpolata linearmente in WSE fra il livello valido (bagnato, con J > 0) più vicino sotto e
+   quello più vicino sopra, nella stessa sezione;
+2. se c'è un solo livello valido, sotto o sopra, si prende quello;
+3. se la sezione non ne ha nessuno, si usa la pendenza media del fondo dell'asta.
+
+jden si calcola poi con la velocità del livello, quindi resta coerente con la sua portata. Ogni
+sostituzione compare fra gli avvisi, con la sezione, la riga e il valore originale.
 
 ### β dal modello 2D
 
@@ -158,8 +189,8 @@ elencate qui vengono elaborate**, nell'ordine di `s_m` (l'ordine delle righe non
 | Colonna | Tipo | Descrizione |
 |---|---|---|
 | `fid` | intero | Identificativo GIS (non usato) |
-| `nome` | testo | Nome della sezione, es. `S0400`. Deve coincidere con il nome della nodestring |
-| `s_m` | reale | Ascissa curvilinea lungo l'asse [m], crescente verso valle |
+| `nome` | testo | Nome della sezione, `<asta><numero>`, es. `S0400` o `N00050`. Deve coincidere con il nome della nodestring |
+| `s_m` | reale | Ascissa curvilinea lungo l'asse della propria asta [m], crescente verso valle |
 | `dist_next` | reale | Distanza dalla sezione successiva [m] (non usato) |
 
 ### `bankpoints.csv`: quote degli argini
@@ -189,7 +220,7 @@ Colonne usate (i nomi devono essere esattamente questi):
 | `Mean wse [m]` | livello WSE |
 | `Discharge [m3/s]` | portata Q |
 | `Wetted area [m2]` | area Ω; se è 0 la riga è considerata asciutta |
-| `Reference elevation [m]` | quota di riferimento della sezione (talweg), letta dalla **seconda** riga |
+| `Reference elevation [m]` | quota di riferimento della sezione (talweg), letta dalla prima riga bagnata |
 | `Mean bottom elevation [m]` | riparata nelle righe asciutte |
 | `Wetted geometric length [m]` | larghezza/contorno bagnato W |
 | `t [s]` | facoltativa; se c'è, tutte le sezioni devono avere gli stessi istanti |
@@ -199,8 +230,7 @@ Le altre colonne (volumi, trasporto solido, …) vengono ignorate.
 Requisiti:
 - tutte le sezioni hanno lo **stesso numero di righe** (gli stessi scalini);
 - una volta bagnata, una sezione deve restare bagnata negli scalini successivi;
-- la seconda riga deve essere un'uscita valida (non la condizione iniziale a zero), perché da lì
-  si legge la quota di riferimento.
+- una sezione deve essere bagnata almeno in una riga.
 
 ### Mesh `.2dm` e risultati `.h5` (solo con `β_dal_2D = true`)
 
@@ -224,6 +254,19 @@ Requisiti:
 | `S_0050_6000_q2` | 120, ogni 50 m (S0050–S6000) | 52 + riga iniziale, scalini di ~2 m³/s | caso attuale; mesh e `.h5` presenti |
 | `S_0050_6000_q5` | 120, ogni 50 m | 22 + riga iniziale, scalini di ~5 m³/s | mesh e `.h5` presenti |
 | `S_0200_6000` | 30, ogni 200 m (prefisso `ns_channel_`) | 22 + riga iniziale | non c'è `centerpoints.csv` (c'è `sections_dx.csv`); niente mesh/`.h5` |
+| `Brenta_minimum` | 735 su tre aste: N (321), V (60), B (354), ogni ~50 m (prefisso `minimum_scalini_`) | 21 + riga iniziale | niente mesh/`.h5` |
+
+### Più aste
+
+Se i nomi delle sezioni hanno prefissi diversi (es. `N00050`, `V00050`, `B00000`), ogni prefisso è
+un'asta e viene elaborata **indipendentemente** dalle altre:
+- ha la sua ascissa `s_m`, misurata lungo la propria asta, che può ripartire da 0;
+- le pendenze, ΔQ e la condizione di uscita si calcolano solo con le sezioni della stessa asta;
+- la prima sezione di ogni asta ha ΔQ = 0 e l'ultima è trattata come sezione di uscita;
+- i risultati vanno in una sottocartella per asta (vedi [Output](#output)).
+
+Lo script non sa come le aste sono collegate fra loro (confluenze, diramazioni): i collegamenti
+vanno gestiti nel modello 1D. Un'asta deve avere almeno due sezioni.
 
 ---
 
@@ -231,6 +274,10 @@ Requisiti:
 
 Gli output vanno in `output/<caso>/` (cartella `OutputFolder`; con β dal 2D il nome ha il
 suffisso `_beta`):
+
+Con più aste, la stessa struttura si ripete in una sottocartella per asta:
+`output/<caso>/<asta>/tabella_sezioni.csv`, `output/<caso>/<asta>/<nome sezione>/…`. Il numero
+progressivo delle sezioni riparte da 1 in ogni asta.
 
 ```
 output/<caso>/
@@ -242,6 +289,7 @@ output/<caso>/
     ├── larghezza_bagnata.svg
     ├── raggio.idraulico.svg
     ├── pendenza_wse.svg
+    ├── pendenza_energia.svg
     ├── ks.svg
     ├── jden.svg
     └── beta.svg               # solo con β_dal_2D = true
@@ -263,7 +311,7 @@ sezione,WSE,Ω,Ω_s,β,β_s,jden,jden_s,W,W_s,RH,RH_s,ΔQ,ΔQ_s
 - `sezione` è il numero progressivo (1 = più a monte), non il nome;
 - il modello legge **solo le prime 12 colonne**, in questo ordine fisso;
 - `ΔQ` e `ΔQ_s` (colonne 13–14) per ora non sono usate dal modello;
-- `iWSE` e `Ks` non compaiono qui: sono nelle tabelle delle singole sezioni.
+- `iWSE`, `J` e `Ks` non compaiono qui: sono nelle tabelle delle singole sezioni.
 
 ### `localslope_xcoord.csv`: geometria longitudinale
 
@@ -272,14 +320,14 @@ Una riga per sezione:
 | Colonna | Descrizione |
 |---|---|
 | `section` | numero progressivo, come in `tabella_sezioni.csv` |
-| `local_slope` | pendenza locale del fondo, **negativa se il fondo scende verso valle** (differenze centrate sul talweg). Nell'ultima sezione è la pendenza media dell'intero tratto |
+| `local_slope` | pendenza locale del fondo, **negativa se il fondo scende verso valle** (differenze centrate sul talweg). Nell'ultima sezione è la pendenza media dell'intera asta |
 | `x_coord_[m]` | ascissa curvilinea `s_m` |
 | `talweg_[m]` | quota di riferimento della sezione (`Reference elevation`) |
 | `argine_dx_[m]`, `argine_sx_[m]` | quote degli argini da `bankpoints.csv` |
 
 ### `<nome sezione>/tabella.csv`
 
-Tutte le colonne della [tabella delle grandezze](#grandezze-tabellate), compresi `iWSE` e `Ks`.
+Tutte le colonne della [tabella delle grandezze](#grandezze-tabellate), compresi `iWSE`, `J` e `Ks`.
 Tabella e grafici di una sezione vengono **riscritti solo se la tabella è cambiata** rispetto a
 quella già salvata, così i file non cambiano inutilmente.
 
@@ -288,12 +336,12 @@ quella già salvata, così i file non cambiano inutilmente.
 Una riga di riepilogo per sezione:
 
 ```
-Sezione     n WSE          iWSE [-]    Ks [m^(1/3)/s]             β [-]
+Sezione     n WSE             J [-]    Ks [m^(1/3)/s]             β [-]
 S0050          53  0.00xxx  0.00xxx    xx.xx    xx.xx    1.000    1.000
 ...
 ```
 
-(numero di livelli; min e max di iWSE, Ks e β), seguita dall'elenco degli
+(numero di livelli; min e max di J, Ks e β), seguita dall'elenco degli
 [avvisi](#controlli-e-avvisi).
 
 ### Output presenti in `output/`
@@ -343,7 +391,8 @@ riconosciuto e la cartella di output. Se la cartella di input non esiste, si fer
 quelle disponibili.
 
 I percorsi sono risolti rispetto alla posizione dello script, quindi la cartella di lavoro non
-conta: basta che `--project` punti a questa cartella.
+conta. Anche `--project=.` è facoltativo: se manca, lo script attiva da solo l'ambiente Julia
+del progetto. Le dipendenze vanno comunque installate una volta con `Pkg.instantiate()`.
 
 In alternativa, dal REPL (utile per avere i grafici a schermo). Il caso si sceglie riempiendo
 `ARGS` prima di `include`:
@@ -365,7 +414,8 @@ Per cambiare caso dal REPL bisogna riavviare Julia: la cartella viene fissata al
 | `doplot` | `false` | mostra i grafici di ogni sezione |
 
 e restituisce `(tabelle, tabella_unica, geometria)`: un `Dict` nome → `DataFrame` per sezione,
-la tabella unica e la tabella della geometria.
+la tabella unica e la tabella della geometria. Con più aste restituisce invece un `Dict`
+asta → `(tabelle, tabella_unica, geometria)`.
 
 > L'ultima riga di `main.jl` è `main(; dosave=true)`: con `include` o lanciandolo da terminale,
 > l'elaborazione parte subito e **salva**.
@@ -387,7 +437,8 @@ qui ma dalla riga di comando (vedi [Come lanciarlo](#come-lanciarlo)).
 | `OutputFolder` | `output/<cartella di output>` con β = 1, `output/<cartella di output>_beta` con β dal 2D, così i due casi non si sovrascrivono |
 | `Format` | estensione dei file tabellari (`.csv`) |
 | `g` | accelerazione di gravità [m/s²] |
-| `iWSE_lim`, `Ks_lim`, `β_lim` | intervalli di plausibilità, usati **solo** per gli avvisi |
+| `J_lim_rel` | intervallo di plausibilità di `J`, in multipli della pendenza media del fondo dell'asta (0,25–2,5), usato **solo** per gli avvisi |
+| `Ks_lim`, `β_lim` | intervalli di plausibilità di Ks e β, usati **solo** per gli avvisi |
 | `Qrel_lim` | scarto relativo massimo tollerato tra la portata degli elementi e quella della sezione (calcolo di β) |
 | `h_dry`, `Q_dry`, `Ks_dry` | tirante, portata e Ks usati per ricostruire la prima riga asciutta |
 
@@ -398,19 +449,23 @@ poco. Il calcolo di β resta disponibile per confronto e scrive in una cartella 
 
 ## Controlli e avvisi
 
-Gli **errori** fermano l'elaborazione:
-- file di input mancanti;
+Gli **errori** fermano l'elaborazione con un messaggio che indica il file e cosa correggere:
+- cartella o file di input mancanti, colonne mancanti nei CSV;
+- in `centerpoints.csv`: nomi ripetuti, nomi che non finiscono con un numero, valori mancanti,
+  ascisse ripetute nella stessa asta, aste con una sola sezione;
+- punti `_sx`/`_dx` mancanti in `bankpoints.csv`;
 - sezioni con numero di righe o istanti diversi;
-- righe asciutte dopo il primo scalino bagnato;
-- nessuna pendenza positiva disponibile per sostituirne una non positiva;
+- sezioni sempre asciutte, o asciutte dopo il primo scalino bagnato;
+- sezioni senza nessuna pendenza dell'energia positiva in un'asta con fondo non discendente;
 - (con β dal 2D) mesh e risultati che non corrispondono, nodestring mancanti, CSV delle sezioni
   diversi dalle uscite dell'HDF5, area degli elementi diversa da quella della sezione.
 
 Gli **avvisi** non modificano i dati: sono stampati in fondo, con il loro numero
 (`Controlli: N valori fuori dai limiti`):
 - portata non crescente con gli scalini (normale dove c'è esondazione a monte);
-- `iWSE`, `Ks` o `β` fuori dagli intervalli `*_lim`;
-- pendenze non positive sostituite;
+- `J`, `Ks` o `β` fuori dagli intervalli di plausibilità;
+- talweg che sale da monte a valle (probabile `s_m` orientata al contrario);
+- pendenze dell'energia non positive sostituite (interpolate);
 - righe scartate perché il livello non cresce;
 - (con β dal 2D) portata degli elementi lontana da quella della sezione.
 
