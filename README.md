@@ -504,6 +504,26 @@ chiude entro il 2% di `Q_monte`. Le sezioni sono costanti in testa allo script.
 
 ---
 
+## Grafici di controllo
+
+[src/grafici.jl](src/grafici.jl) legge solo i file già in `output/<cartella>` (tabella, geometria, topologia
+e, se c'è, la scala della diversione) e salva le immagini in `output/<cartella>/grafici`:
+
+```bash
+julia --project=. src/grafici.jl [<cartella di output>]   # predefinita: Brenta_caldonazzo_borgo
+```
+
+- `profilo_<asta>.png`: talweg, argini dx/sx e livello massimo in tabella; in arancione le sezioni in cui
+  il livello supera l'argine più basso;
+- `pendenza_<asta>.png`: pendenza locale (negativa se il fondo scende verso valle), con le contropendenze (> 0) evidenziate;
+- `controlli_<asta>.png`: tirante massimo e franco degli argini, W, jden massimo, ΔQ e punteggio di anomalia
+  lungo l'asta;
+- `mappa_jden.png`, `mappa_DQ.png`: mappe sezione × riga della tabella;
+- `scala_diversione.png`: scala Q monte → Q Brenta vecchio, ripartizione e bilancio;
+- `sezioni/<nome>.png`: Ω, W, RH, jden, ΔQ e Ω_s (confrontata con la differenza finita) in funzione del
+  livello, per la prima e l'ultima sezione di ogni asta, le sezioni della diversione e le più anomale;
+  l'elenco con il motivo è in `sezioni_selezionate.csv`.
+
 ## Struttura della cartella
 
 ```
@@ -513,7 +533,8 @@ calcolo_tabelle_2Dto1D/
 ├── Manifest.toml         # versioni esatte (non versionato, vedi .gitignore)
 ├── src/
 │   ├── main_sezioni.jl   # tabelle delle sezioni per il modello 1D
-│   └── main_diversione.jl # scala di deflusso della diversione Brenta nuovo / Brenta vecchio
+│   ├── main_diversione.jl # scala di deflusso della diversione Brenta nuovo / Brenta vecchio
+│   └── grafici.jl        # grafici di controllo dagli output
 ├── input/                # un caso per sottocartella (vedi "Input")
 └── output/               # un caso per sottocartella (vedi "Output")
 ```
