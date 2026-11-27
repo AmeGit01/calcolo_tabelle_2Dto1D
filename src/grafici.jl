@@ -32,7 +32,7 @@ function quantile(v, p)
 end
 const ProjectFolder = normpath(joinpath(@__DIR__, ".."))
 
-length(ARGS) <= 1 || error("Uso: julia --project=. src/grafici.jl [<cartella di output>]")
+length(ARGS) <= 1 || error("Uso: julia --project=. src/$(basename(PROGRAM_FILE)) [<cartella di output>]")
 const OutputName = isempty(ARGS) ? OutputDefault : basename(rstrip(ARGS[1], '/'))
 const Folder = joinpath(ProjectFolder, "output", OutputName)
 const PlotFolder = joinpath(Folder, "grafici")
@@ -163,13 +163,15 @@ function plot_mappa(geo, tab, col, titolo; trasf=identity, clims=:auto, cmap=:vi
     return plt
 end
 
-function plot_sezione(t, gs, motivo)
+# evid: righe della tabella da evidenziare (in arancione) in tutti i pannelli
+function plot_sezione(t, gs, motivo; evid=Int[])
     tw, adx, asx = gs["talweg_[m]"], gs["argine_dx_[m]"], gs["argine_sx_[m]"]
     function pannello(x, xl; kw...)
         p = plot(x, t.WSE; marker=:circle, ms=2, msw=0, c=C_dx, label="", xlabel=xl, ylabel="WSE [m]", kw...)
         hline!(p, [tw], c=C_talweg, ls=:dash, label="talweg")
         hline!(p, [adx], c=C_dx, ls=:dot, label="argine dx")
         hline!(p, [asx], c=C_sx, ls=:dot, label="argine sx")
+        isempty(evid) || scatter!(p, x[evid], t.WSE[evid], c=C_evid, ms=4, msw=0, label="righe anomale")
         return p
     end
     fd = diff(t.Ω) ./ max.(diff(t.WSE), 1e-6)
@@ -249,4 +251,7 @@ function main()
     println()
 end
 
-main()
+# eseguito solo se lanciato direttamente: W_check.jl include questo file per riusarne le funzioni
+if abspath(PROGRAM_FILE) == @__FILE__
+    main()
+end

@@ -524,6 +524,21 @@ julia --project=. src/grafici.jl [<cartella di output>]   # predefinita: Brenta_
   livello, per la prima e l'ultima sezione di ogni asta, le sezioni della diversione e le più anomale;
   l'elenco con il motivo è in `sezioni_selezionate.csv`.
 
+## Controllo della larghezza W
+
+[src/W_check.jl](src/W_check.jl) cerca nelle tabelle salvate le sezioni in cui W non cresce regolarmente
+con il livello (es. B13100: W sale di 2 m e torna indietro in 5 cm, con W_s = −368). Ogni calo di W
+oltre max(0,10 m, 2 % di W) è classificato come **picco** (W sale e torna al valore di prima), **buco**
+(scende e risale) o **calo** (scende e non risale); sono segnalate anche le righe con W_s < 0.
+
+```bash
+julia --project=. src/W_check.jl [<cartella di output>]   # predefinita: Brenta_caldonazzo_borgo
+```
+
+Output in `output/<cartella>/W_check/`: `W_check.csv` (un evento per riga), `report_W_check.md`
+(descrizione per sezione) e `sezioni/<nome>.png` (grafici come in `grafici/sezioni`, righe anomale in
+arancione). Usa le funzioni di `grafici.jl`, che lo include.
+
 ## Struttura della cartella
 
 ```
@@ -534,7 +549,8 @@ calcolo_tabelle_2Dto1D/
 ├── src/
 │   ├── main_sezioni.jl   # tabelle delle sezioni per il modello 1D
 │   ├── main_diversione.jl # scala di deflusso della diversione Brenta nuovo / Brenta vecchio
-│   └── grafici.jl        # grafici di controllo dagli output
+│   ├── grafici.jl        # grafici di controllo dagli output
+│   └── W_check.jl        # controllo dei picchi di larghezza W
 ├── input/                # un caso per sottocartella (vedi "Input")
 └── output/               # un caso per sottocartella (vedi "Output")
 ```
