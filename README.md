@@ -10,30 +10,69 @@ serie di **nodestring** (le sezioni). Ogni scalino dà, per ogni sezione, un pun
 "livello → area, larghezza, …". Mettendo in fila gli scalini si ottiene, per ogni sezione, una
 tabella in funzione del livello idrometrico (WSE) che il modello 1D può interpolare.
 
+## Gli script
+
+Gli script sono in [src/](src/) e sono indipendenti: ognuno si lancia da terminale con
+`julia --project=. src/<script>.jl [<cartella>]` e scrive solo nella cartella `output/<cartella>`.
+
+| Script | Legge | Scrive | Scopo |
+|---|---|---|---|
+| [main_sezioni.jl](src/main_sezioni.jl) | `input/<caso>` | `tabella_sezioni.csv`, `localslope_xcoord.csv`, `topologia_sezioni.csv` | calcola le tabelle delle sezioni per il modello 1D |
+| [main_diversione.jl](src/main_diversione.jl) | `input/<caso>` | `scala_diversione.csv` | scala di deflusso portata-portata della diversione Brenta nuovo / Brenta vecchio |
+| [grafici.jl](src/grafici.jl) | `output/<caso>` | `grafici/` | grafici di controllo delle tabelle già calcolate |
+| [W_check.jl](src/W_check.jl) | `output/<caso>` | `W_check/` | cerca i picchi della larghezza W che creano problemi nel modello 1D |
+
+I primi due lavorano sui risultati 2D, gli altri due **solo sugli output già salvati**, quindi si
+possono rilanciare in ogni momento senza rifare il calcolo. Comandi pronti da copiare, dalla
+cartella del progetto, nell'ordine in cui vanno lanciati per il caso `Brenta_caldonazzo_borgo`:
+
+```bash
+julia --project=. src/main_sezioni.jl Brenta_caldonazzo_borgo
+julia --project=. src/main_diversione.jl Brenta_caldonazzo_borgo
+julia --project=. src/grafici.jl Brenta_caldonazzo_borgo
+julia --project=. src/W_check.jl Brenta_caldonazzo_borgo
+```
+
+Tutti e quattro insieme:
+
+```bash
+for s in main_sezioni main_diversione grafici W_check; do julia --project=. src/$s.jl Brenta_caldonazzo_borgo || break; done
+```
+
+Gli ultimi tre hanno `Brenta_caldonazzo_borgo` come cartella predefinita e si possono lanciare
+anche senza argomento; `main_sezioni.jl` no (il suo caso predefinito è `S_0050_6000_q2`). Il
+calcolo delle tabelle richiede alcuni minuti, gli altri script pochi secondi più la compilazione
+di Julia.
+
 ---
 
 ## Indice
 
-1. [Cosa fa lo script](#cosa-fa-lo-script)
+1. [Calcolo delle tabelle (`main_sezioni.jl`)](#calcolo-delle-tabelle-main_sezionijl)
 2. [Grandezze tabellate](#grandezze-tabellate)
 3. [Input](#input)
 4. [Output](#output)
 5. [Come lanciarlo](#come-lanciarlo)
 6. [Parametri di configurazione](#parametri-di-configurazione)
 7. [Controlli e avvisi](#controlli-e-avvisi)
-8. [Diversione Brenta nuovo / Brenta vecchio](#diversione-brenta-nuovo--brenta-vecchio)
-9. [Struttura della cartella](#struttura-della-cartella)
-10. [Note e limitazioni](#note-e-limitazioni)
+8. [Diversione Brenta nuovo / Brenta vecchio (`main_diversione.jl`)](#diversione-brenta-nuovo--brenta-vecchio-main_diversionejl)
+9. [Grafici di controllo (`grafici.jl`)](#grafici-di-controllo-graficijl)
+10. [Controllo della larghezza W (`W_check.jl`)](#controllo-della-larghezza-w-w_checkjl)
+11. [Struttura della cartella](#struttura-della-cartella)
+12. [Note e limitazioni](#note-e-limitazioni)
 
 ---
 
-## Cosa fa lo script
+## Calcolo delle tabelle (`main_sezioni.jl`)
 
-Il calcolo delle tabelle è in [src/main_sezioni.jl](src/main_sezioni.jl) (la scala di deflusso della diversione è a parte, vedi [Diversione](#diversione-brenta-nuovo--brenta-vecchio)). In ordine:
+Il calcolo delle tabelle è in [src/main_sezioni.jl](src/main_sezioni.jl). In ordine:
 
 1. **Controllo dei file di input.** Verifica che esistano `centerpoints.csv`, `bankpoints.csv`
    e un file per ogni sezione elencata in `centerpoints.csv` (più mesh e risultati 2D se β è
-   calcolato dal 2D). Se manca qualcosa elenca tutti i file mancanti e si ferma.
+   calcolato dal 2D). Se manca qualcosa elenca tutti i file mancanti e si ferma. Fanno eccezione i
+   file delle sezioni con `SaltaSezioniSenzaFile = true`: le sezioni senza file sono escluse con un
+   avviso giallo che le elenca (in `Brenta_caldonazzo_borgo`, per esempio, B17700–B33800 e V00000,
+   che la simulazione non ha salvato).
 2. **Riconoscimento delle aste.** Le aste si ricavano dal nome delle sezioni, che è
    `<asta><numero>`: per esempio `N00050` → asta `N`, `B17650` → asta `B`, `S0400` → asta `S`.
    Ogni asta è elaborata come un **tratto indipendente**, con la sua ascissa `s_m` e le sue
@@ -68,8 +107,11 @@ Il calcolo delle tabelle è in [src/main_sezioni.jl](src/main_sezioni.jl) (la sc
    uscita restituisce la portata degli scalini 2D. Vicino al bordo di valle del dominio 2D la
    pendenza del pelo libero è falsata dal richiamo dell'uscita.
 11. **Calcolo della tabella** di ogni sezione (vedi sotto) e controlli di plausibilità.
-12. **Scrittura** delle tabelle per sezione, dei grafici, della tabella unica per il modello 1D e
-    del file con la geometria longitudinale.
+12. **Scrittura** della tabella unica per il modello 1D, del file con la geometria longitudinale e
+    di quello con la topologia (numero progressivo → nome della sezione). Con
+    `CartelleSezioni = true` scrive anche una cartella per sezione con la tabella completa e i
+    grafici. Con più aste e `AsteUnite = true` i tre file sono unici per tutte le aste (vedi
+    [Più aste](#più-aste)).
 
 ---
 
@@ -252,10 +294,12 @@ Requisiti:
 
 | Cartella | Sezioni | Scalini | Note |
 |---|---|---|---|
-| `S_0050_6000_q2` | 120, ogni 50 m (S0050–S6000) | 52 + riga iniziale, scalini di ~2 m³/s | caso attuale; mesh e `.h5` presenti |
-| `S_0050_6000_q5` | 120, ogni 50 m | 22 + riga iniziale, scalini di ~5 m³/s | mesh e `.h5` presenti |
-| `S_0200_6000` | 30, ogni 200 m (prefisso `ns_channel_`) | 22 + riga iniziale | non c'è `centerpoints.csv` (c'è `sections_dx.csv`); niente mesh/`.h5` |
+| `Brenta_caldonazzo_borgo` | 738 in `centerpoints.csv` su due aste, B (B00000–B33800) e V (V00000–V03000), ogni 50 m; **414 con risultati** (B00000–B17650, V00050–V03000), prefisso `scalini_` | 21 + riga iniziale | caso attuale; contiene la diversione Brenta nuovo / Brenta vecchio; niente mesh/`.h5` |
+| `S_0050_6000_q2` | 120, ogni 50 m (S0050–S6000), prefisso `ns_50_scalini_` | 52 + riga iniziale, scalini di ~2 m³/s | caso predefinito di `main_sezioni.jl`; c'è la mesh ma non il `.h5` (serve solo con β dal 2D) |
 | `Brenta_minimum` | 735 su tre aste: N (321), V (60), B (354), ogni ~50 m (prefisso `minimum_scalini_`) | 21 + riga iniziale | niente mesh/`.h5` |
+
+I file delle sezioni di `Brenta_caldonazzo_borgo` sono estratti da
+`BM_results/inputs/scalini_results.h5` con lo script Python `BM_results/py_src/BMv41nsalldata.py`.
 
 ### Più aste
 
@@ -263,8 +307,16 @@ Se i nomi delle sezioni hanno prefissi diversi (es. `N00050`, `V00050`, `B00000`
 un'asta e viene elaborata **indipendentemente** dalle altre:
 - ha la sua ascissa `s_m`, misurata lungo la propria asta, che può ripartire da 0;
 - le pendenze, ΔQ e la condizione di uscita si calcolano solo con le sezioni della stessa asta;
-- la prima sezione di ogni asta ha ΔQ = 0 e l'ultima è trattata come sezione di uscita;
-- i risultati vanno in una sottocartella per asta (vedi [Output](#output)).
+- la prima sezione di ogni asta ha ΔQ = 0 e l'ultima è trattata come sezione di uscita.
+
+Come vengono scritti i risultati dipende da `AsteUnite`:
+- `true` (predefinito): **un solo** `tabella_sezioni.csv`, `localslope_xcoord.csv` e
+  `topologia_sezioni.csv` per tutte le aste, con le aste una dopo l'altra in ordine alfabetico
+  (B prima di V) e il numero progressivo che continua da un'asta all'altra. In
+  `Brenta_caldonazzo_borgo`: B = sezioni 1–354, V = sezioni 355–414. `x_coord_[m]` riparte invece
+  dall'inizio di ogni asta, e `topologia_sezioni.csv` dice a quale asta appartiene ogni numero;
+- `false`: una sottocartella per asta, `output/<caso>/<asta>/`, con il numero progressivo che
+  riparte da 1 in ogni asta.
 
 Lo script non sa come le aste sono collegate fra loro (confluenze, diramazioni): i collegamenti
 vanno gestiti nel modello 1D. Un'asta deve avere almeno due sezioni.
@@ -274,17 +326,17 @@ vanno gestiti nel modello 1D. Un'asta deve avere almeno due sezioni.
 ## Output
 
 Gli output vanno in `output/<caso>/` (cartella `OutputFolder`; con β dal 2D il nome ha il
-suffisso `_beta`):
-
-Con più aste, la stessa struttura si ripete in una sottocartella per asta:
-`output/<caso>/<asta>/tabella_sezioni.csv`, `output/<caso>/<asta>/<nome sezione>/…`. Il numero
-progressivo delle sezioni riparte da 1 in ogni asta.
+suffisso `_beta`). Contenuto completo, con i file di tutti gli script:
 
 ```
 output/<caso>/
-├── tabella_sezioni.csv        # tabella unica per il modello 1D
-├── localslope_xcoord.csv      # geometria longitudinale
-└── <nome sezione>/            # una cartella per sezione
+├── tabella_sezioni.csv        # main_sezioni.jl: tabella unica per il modello 1D
+├── localslope_xcoord.csv      # main_sezioni.jl: geometria longitudinale
+├── topologia_sezioni.csv      # main_sezioni.jl: numero progressivo → nome e asta della sezione
+├── scala_diversione.csv       # main_diversione.jl
+├── grafici/                   # grafici.jl
+├── W_check/                   # W_check.jl
+└── <nome sezione>/            # main_sezioni.jl, solo con CartelleSezioni = true
     ├── tabella.csv            # tabella completa della sezione
     ├── area_bagnata.svg
     ├── larghezza_bagnata.svg
@@ -295,6 +347,10 @@ output/<caso>/
     ├── jden.svg
     └── beta.svg               # solo con β_dal_2D = true
 ```
+
+Con più aste e `AsteUnite = false` i file di `main_sezioni.jl` stanno invece in
+`output/<caso>/<asta>/` (vedi [Più aste](#più-aste)). Gli altri script leggono solo la struttura
+con le aste unite.
 
 ### `tabella_sezioni.csv`: input del modello 1D
 
@@ -326,7 +382,19 @@ Una riga per sezione:
 | `talweg_[m]` | quota di riferimento della sezione (`Reference elevation`) |
 | `argine_dx_[m]`, `argine_sx_[m]` | quote degli argini da `bankpoints.csv` |
 
-### `<nome sezione>/tabella.csv`
+### `topologia_sezioni.csv`: nomi delle sezioni
+
+Il modello 1D numera le sezioni con un intero progressivo; questo file dice a quale sezione reale
+corrisponde ogni numero. Una riga per sezione:
+
+| Colonna | Descrizione |
+|---|---|
+| `section` | numero progressivo, come in `tabella_sezioni.csv` e `localslope_xcoord.csv` |
+| `nome` | nome della sezione, es. `B13200` |
+| `asta` | asta, ricavata dal prefisso del nome (`B`, `V`, …) |
+| `x_coord_[m]` | ascissa curvilinea lungo la propria asta |
+
+### `<nome sezione>/tabella.csv` (solo con `CartelleSezioni = true`)
 
 Tutte le colonne della [tabella delle grandezze](#grandezze-tabellate), compresi `iWSE`, `J` e `Ks`.
 Tabella e grafici di una sezione vengono **riscritti solo se la tabella è cambiata** rispetto a
@@ -349,10 +417,8 @@ S0050          53  0.00xxx  0.00xxx    xx.xx    xx.xx    1.000    1.000
 
 | Cartella | Origine |
 |---|---|
-| `S_50m_q2` | caso `S_0050_6000_q2`, β = 1 (configurazione attuale dello script) |
-| `S_50m` | sezioni ogni 50 m, β = 1, 22 scalini; versione precedente dello script (senza `ΔQ`) |
-| `S_50m_beta` | come `S_50m`, con β dal 2D |
-| `S_200m` | caso `S_0200_6000`; versione precedente dello script |
+| `Brenta_caldonazzo_borgo` | caso `Brenta_caldonazzo_borgo`, β = 1, aste unite, senza cartelle per sezione; contiene anche gli output di `main_diversione.jl`, `grafici.jl` e `W_check.jl` |
+| `S_50m_q2` | caso `S_0050_6000_q2`, β = 1, con una cartella per sezione |
 
 ---
 
@@ -367,7 +433,13 @@ La prima volta, dalla cartella del progetto:
 julia --project=. -e 'using Pkg; Pkg.instantiate()'
 ```
 
-Poi si sceglie il caso dalla riga di comando, senza modificare lo script:
+Comando pronto da copiare per il caso attuale:
+
+```bash
+julia --project=. src/main_sezioni.jl Brenta_caldonazzo_borgo
+```
+
+In generale il caso si sceglie dalla riga di comando, senza modificare lo script:
 
 ```bash
 julia --project=. src/main_sezioni.jl <cartella di input> [<cartella di output>]
@@ -375,14 +447,15 @@ julia --project=. src/main_sezioni.jl <cartella di input> [<cartella di output>]
 
 | Argomento | Significato |
 |---|---|
-| `<cartella di input>` | sottocartella di `input/`. Va bene sia `S_0050_6000_q5` sia `input/S_0050_6000_q5/`, che si ottiene con il completamento automatico del terminale |
+| `<cartella di input>` | sottocartella di `input/`. Va bene sia `Brenta_caldonazzo_borgo` sia `input/Brenta_caldonazzo_borgo/`, che si ottiene con il completamento automatico del terminale |
 | `<cartella di output>` | facoltativo: sottocartella di `output/`. Se manca, ha lo stesso nome della cartella di input |
 
 Esempi:
 
 ```bash
-julia --project=. src/main_sezioni.jl S_0050_6000_q5              # → output/S_0050_6000_q5
-julia --project=. src/main_sezioni.jl S_0050_6000_q5 S_50m_q5     # → output/S_50m_q5
+julia --project=. src/main_sezioni.jl Brenta_caldonazzo_borgo     # → output/Brenta_caldonazzo_borgo
+julia --project=. src/main_sezioni.jl Brenta_minimum              # → output/Brenta_minimum
+julia --project=. src/main_sezioni.jl S_0050_6000_q2 S_50m_q2     # → output/S_50m_q2
 julia --project=. src/main_sezioni.jl                             # caso predefinito: S_0050_6000_q2 → output/S_50m_q2
 julia --project=. src/main_sezioni.jl --help                      # uso e cartelle disponibili in input/
 ```
@@ -400,7 +473,7 @@ In alternativa, dal REPL (utile per avere i grafici a schermo). Il caso si scegl
 
 ```julia
 julia> ]activate .
-julia> append!(empty!(ARGS), ["S_0050_6000_q5"])   # facoltativo: senza, caso predefinito
+julia> append!(empty!(ARGS), ["Brenta_caldonazzo_borgo"])   # facoltativo: senza, caso predefinito
 julia> include("src/main_sezioni.jl")                      # esegue già main(; dosave=true)
 julia> tabelle, tabella_unica, geometria = main(; doplot=true)   # rilancia mostrando i grafici
 ```
@@ -435,6 +508,9 @@ qui ma dalla riga di comando (vedi [Come lanciarlo](#come-lanciarlo)).
 |---|---|
 | `InputDefault`, `OutputDefault` | caso elaborato quando si lancia lo script senza argomenti |
 | `β_dal_2D` | `true`: β dal campo di velocità 2D; `false`: β = 1 |
+| `CartelleSezioni` | `true`: scrive anche una cartella per sezione con tabella completa e grafici `.svg`; `false` (predefinito): solo i file riassuntivi, utile con centinaia di sezioni |
+| `AsteUnite` | con più aste, `true` (predefinito): un unico file per tutte le aste; `false`: una sottocartella per asta (vedi [Più aste](#più-aste)) |
+| `SaltaSezioniSenzaFile` | `true` (predefinito): le sezioni di `centerpoints.csv` senza file dei risultati sono escluse con un avviso; `false`: l'elaborazione si ferma. Le sezioni escluse devono stare in testa o in coda a un'asta, non in mezzo: lì le pendenze verrebbero calcolate su una distanza più lunga |
 | `OutputFolder` | `output/<cartella di output>` con β = 1, `output/<cartella di output>_beta` con β dal 2D, così i due casi non si sovrascrivono |
 | `Format` | estensione dei file tabellari (`.csv`) |
 | `g` | accelerazione di gravità [m/s²] |
@@ -475,20 +551,44 @@ all'uscita del dominio 2D. Vanno letti, non per forza eliminati.
 
 ---
 
-## Diversione Brenta nuovo / Brenta vecchio
+## Diversione Brenta nuovo / Brenta vecchio (`main_diversione.jl`)
 
 Il Brenta è a canale singolo fino alla sezione `B13200`, dove si divide nel **Brenta nuovo**
 (`B13250`, canale principale) e nel **Brenta vecchio** (`V00050`, prima sezione dell'asta V con
-risultati). Nel modello 1D le due aste sono risolte in modo indipendente: il Brenta nuovo ha una
-portata uscente verso il Brenta vecchio, ricavata dalla simulazione a scalini con
-[src/main_diversione.jl](src/main_diversione.jl):
+risultati: `V00000` non è stata salvata). Nel modello 1D le due aste sono risolte in modo
+indipendente: il Brenta nuovo ha una portata uscente verso il Brenta vecchio, che va imposta come
+funzione della portata in arrivo da monte. [src/main_diversione.jl](src/main_diversione.jl)
+ricava questa funzione dalla simulazione a scalini.
+
+Comando pronto da copiare:
+
+```bash
+julia --project=. src/main_diversione.jl Brenta_caldonazzo_borgo
+```
+
+Forma generale:
 
 ```bash
 julia --project=. src/main_diversione.jl [<cartella di input>]   # predefinita: Brenta_caldonazzo_borgo
 ```
 
-Per ogni salvataggio legge la portata delle tre sezioni e scrive in
-`output/<cartella>/scala_diversione.csv` la scala di deflusso portata-portata:
+L'argomento è una sottocartella di `input/`; l'output va nella sottocartella di `output/` con lo
+stesso nome. Come gli altri script, attiva da solo l'ambiente del progetto.
+
+### Come funziona
+
+1. Legge la colonna `Discharge [m3/s]` dei file delle tre sezioni (`*<nome>.csv` nella cartella di
+   input; il prefisso non conta, ma il file deve essere uno solo). Ogni riga è un salvataggio della
+   simulazione, quindi le tre sezioni devono avere lo stesso numero di righe.
+2. **Bilancio**: per ogni salvataggio calcola `Q_monte − Q_nuovo − Q_vecchio` e avvisa se supera
+   `Bilancio_lim` (2 %) di `Q_monte`. Uno scarto piccolo e positivo alle portate alte è atteso:
+   parte dell'acqua passa fuori dalle nodestring (in golena) fra `B13200` e la biforcazione.
+3. **Monotonia**: la scala deve avere `Q_monte` crescente, quindi i salvataggi in cui `Q_monte` non
+   supera il massimo dei precedenti sono scartati con un avviso.
+4. Calcola la frazione `Q_vecchio / Q_monte` (0 quando `Q_monte` = 0), stampa la tabella a terminale
+   seguita dagli avvisi e scrive `output/<cartella>/scala_diversione.csv`.
+
+### `scala_diversione.csv`
 
 | Colonna | Significato |
 |---|---|
@@ -499,45 +599,178 @@ Per ogni salvataggio legge la portata delle tre sezioni e scrive in
 | `frazione_brenta_vecchio_[-]` | `Q_brenta_vecchio / Q_monte` |
 | `residuo_bilancio_[m3/s]` | `Q_monte − Q_nuovo − Q_vecchio` |
 
-I salvataggi con `Q_monte` non crescente sono scartati, e viene segnalato quando il bilancio non
-chiude entro il 2% di `Q_monte`. Le sezioni sono costanti in testa allo script.
+La scala da usare nel modello 1D è la coppia `Q_monte_[m3/s]` → `Q_brenta_vecchio_[m3/s]`,
+interpolata linearmente. Con `Brenta_caldonazzo_borgo` ha 22 punti, da 0 a 211 m³/s: la quota verso
+il Brenta vecchio scende da circa il 19 % a 2 m³/s all'8 % a 211 m³/s (16,6 m³/s); il bilancio chiude
+entro 1,5 m³/s (0,7 %). Il grafico è in `grafici/scala_diversione.png` (vedi
+[Grafici di controllo](#grafici-di-controllo-graficijl)).
+
+### Parametri
+
+Costanti in testa allo script:
+
+| Costante | Valore | Significato |
+|---|---|---|
+| `InputDefault` | `Brenta_caldonazzo_borgo` | cartella usata senza argomenti |
+| `SezMonte` | `B13200` | ultima sezione a canale singolo, a monte della biforcazione |
+| `SezNuovo` | `B13250` | prima sezione del Brenta nuovo, usata solo per il bilancio |
+| `SezVecchio` | `V00050` | prima sezione del Brenta vecchio con risultati |
+| `Bilancio_lim` | 0,02 | scarto massimo del bilancio, relativo a `Q_monte`, oltre il quale si avvisa |
 
 ---
 
-## Grafici di controllo
+## Grafici di controllo (`grafici.jl`)
 
-[src/grafici.jl](src/grafici.jl) legge solo i file già in `output/<cartella>` (tabella, geometria, topologia
-e, se c'è, la scala della diversione) e salva le immagini in `output/<cartella>/grafici`:
+[src/grafici.jl](src/grafici.jl) disegna la situazione del caso e aiuta a trovare le sezioni in cui
+le tabelle hanno problemi. Legge **solo** i file già salvati in `output/<cartella>`:
+`localslope_xcoord.csv` e `tabella_sezioni.csv` (obbligatori), `topologia_sezioni.csv` (se manca, le
+sezioni sono indicate con il numero e trattate come un'asta sola) e `scala_diversione.csv` (se manca,
+il grafico della diversione è saltato). Salva i PNG in `output/<cartella>/grafici/`, sovrascrivendo
+quelli già presenti.
+
+Comando pronto da copiare:
+
+```bash
+julia --project=. src/grafici.jl Brenta_caldonazzo_borgo
+```
+
+Forma generale:
 
 ```bash
 julia --project=. src/grafici.jl [<cartella di output>]   # predefinita: Brenta_caldonazzo_borgo
 ```
 
-- `profilo_<asta>.png`: talweg, argini dx/sx e livello massimo in tabella; in arancione le sezioni in cui
-  il livello supera l'argine più basso;
-- `pendenza_<asta>.png`: pendenza locale (negativa se il fondo scende verso valle), con le contropendenze (> 0) evidenziate;
-- `controlli_<asta>.png`: tirante massimo e franco degli argini, W, jden massimo, ΔQ e punteggio di anomalia
-  lungo l'asta;
-- `mappa_jden.png`, `mappa_DQ.png`: mappe sezione × riga della tabella;
-- `scala_diversione.png`: scala Q monte → Q Brenta vecchio, ripartizione e bilancio;
-- `sezioni/<nome>.png`: Ω, W, RH, jden, ΔQ e Ω_s (confrontata con la differenza finita) in funzione del
-  livello, per la prima e l'ultima sezione di ogni asta, le sezioni della diversione e le più anomale;
-  l'elenco con il motivo è in `sezioni_selezionate.csv`.
+L'argomento è una sottocartella di `output/`. I grafici sono solo salvati, non mostrati a schermo
+(GR senza finestra), quindi lo script gira anche senza interfaccia grafica.
 
-## Controllo della larghezza W
+### Grafici prodotti
 
-[src/W_check.jl](src/W_check.jl) cerca nelle tabelle salvate le sezioni in cui W non cresce regolarmente
-con il livello (es. B13100: W sale di 2 m e torna indietro in 5 cm, con W_s = −368). Ogni calo di W
-oltre max(0,10 m, 2 % di W) è classificato come **picco** (W sale e torna al valore di prima), **buco**
-(scende e risale) o **calo** (scende e non risale); sono segnalate anche le righe con W_s < 0.
+| File | Contenuto | A cosa serve |
+|---|---|---|
+| `profilo_<asta>.png` | talweg (con il fondo campito), argine dx e sx e livello massimo in tabella lungo l'asta; linea verticale alla diversione. In arancione le sezioni in cui il livello massimo supera l'argine più basso | vedere dove le tabelle arrivano oltre l'alveo inciso, cioè dove il 2D esonda |
+| `pendenza_<asta>.png` | pendenza locale del fondo (`local_slope`, in ‰; negativa se il fondo scende verso valle) con le contropendenze (> 0) in arancione | trovare contropendenze e salti del talweg |
+| `controlli_<asta>.png` | cinque pannelli lungo l'asta: tirante massimo in tabella e altezza dell'argine più basso sul talweg; W al livello massimo; jden massimo (scala log); ΔQ massimo e minimo; punteggio di anomalia | individuare a colpo d'occhio le sezioni fuori dall'andamento delle vicine |
+| `mappa_jden.png` | log₁₀(jden) su una mappa sezione (ascissa) × riga della tabella (ordinata, livello crescente); linea bianca fra un'asta e l'altra | vedere dove jden salta, per sezione e per livello |
+| `mappa_DQ.png` | ΔQ sulla stessa mappa, scala divergente limitata al 99° percentile di \|ΔQ\| (blu: la portata aumenta rispetto alla sezione a monte, rosso: diminuisce) | localizzare esondazioni e rientri |
+| `scala_diversione.png` | Q Brenta vecchio e Q Brenta nuovo in funzione di Q monte; quota verso il Brenta vecchio in %; residuo del bilancio | controllare la scala di `main_diversione.jl` |
+| `sezioni/<nome>.png` | per una sezione, sei pannelli in funzione del livello: Ω, W, RH, jden (log), ΔQ e Ω_s, quest'ultima confrontata con la differenza finita ΔΩ/ΔWSE; righe orizzontali a quota talweg e argini | esaminare le sezioni sospette |
+| `sezioni_selezionate.csv` | sezioni con grafico dedicato, motivo della scelta e indicatori di anomalia | sapere perché una sezione è stata scelta |
+
+Le sezioni con grafico dedicato sono la prima e l'ultima di ogni asta, quelle della diversione
+(`SezioniDiversione`) e le `NSezioniAnomale` con il punteggio di anomalia più alto. La cartella
+`sezioni/` non viene svuotata: se cambia la scelta, i grafici delle sezioni non più selezionate
+restano.
+
+### Punteggio di anomalia
+
+Serve solo a scegliere quali sezioni guardare, non è una verifica. Per ogni sezione è la somma di:
+
+| Indicatore (colonna di `sezioni_selezionate.csv`) | Peso nel punteggio |
+|---|---|
+| `geometria`: righe in cui Ω o W calano al crescere del livello, o Ω_s o W_s sono negative | 1 per riga |
+| `salto_RH`: righe in cui RH cala di oltre il 20 % rispetto alla riga precedente | 0,5 per riga |
+| `jden_rel`: jden massimo della sezione diviso per la mediana dei jden massimi dell'asta | 2 · log₁₀, solo se > 1 |
+| `err_Ωs`: massimo scarto relativo fra Ω_s e la differenza finita ΔΩ/ΔWSE | fino a 5 |
+| `ΔQ_max`: \|ΔQ\| massimo [m³/s] | 1 ogni 10 m³/s |
+| `righe`: righe in meno rispetto alla sezione con più righe | 0,5 per riga |
+
+I pesi sono nella funzione `anomalie()`. Il punteggio è stampato a terminale per le sezioni più
+anomale.
+
+### Parametri
+
+| Costante | Valore | Significato |
+|---|---|---|
+| `OutputDefault` | `Brenta_caldonazzo_borgo` | cartella usata senza argomenti |
+| `SezioniDiversione` | `["B13200", "B13250", "V00050"]` | sezioni della diversione, sempre disegnate e segnate sul profilo; vettore vuoto se non c'è diversione |
+| `NSezioniAnomale` | 12 | quante sezioni più anomale disegnare |
+
+Le funzioni di `grafici.jl` (lettura degli output, `plot_sezione`, …) sono riusate da `W_check.jl`,
+che include il file: per questo `main()` parte solo quando `grafici.jl` è lanciato direttamente.
+
+---
+
+## Controllo della larghezza W (`W_check.jl`)
+
+Nel modello 1D la larghezza W e la sua derivata W_s sono interpolate in funzione del livello. Se in
+una sezione W sale e poi torna indietro in pochi centimetri di livello, W_s diventa enorme e cambia
+segno, e il modello 1D ne risente. Per esempio in `B13100` W passa da 10,82 a 12,82 m e torna a
+10,82 m in 5 cm di livello, con W_s = −368. [src/W_check.jl](src/W_check.jl) cerca questi casi in
+tutte le sezioni.
+
+Comando pronto da copiare:
+
+```bash
+julia --project=. src/W_check.jl Brenta_caldonazzo_borgo
+```
+
+Forma generale:
 
 ```bash
 julia --project=. src/W_check.jl [<cartella di output>]   # predefinita: Brenta_caldonazzo_borgo
 ```
 
-Output in `output/<cartella>/W_check/`: `W_check.csv` (un evento per riga), `report_W_check.md`
-(descrizione per sezione) e `sezioni/<nome>.png` (grafici come in `grafici/sezioni`, righe anomale in
-arancione). Usa le funzioni di `grafici.jl`, che lo include.
+Come `grafici.jl`, legge solo gli output già salvati in `output/<cartella>` (lo include e ne usa le
+funzioni) e non modifica le tabelle.
+
+### Come funziona
+
+Per ogni sezione scorre le righe della tabella per livello crescente e considera ogni **calo di W**
+fra una riga e la successiva più grande della tolleranza max(`TolAbs`, `TolRel` · W). Ogni calo
+diventa un evento, classificato così:
+
+| Tipo | Quando | Righe anomale |
+|---|---|---|
+| **picco** | prima del calo W era salita da un valore non superiore (entro la tolleranza) a quello dopo il calo | le righe del picco |
+| **buco** | non è un picco, e più in alto W risale almeno al valore prima del calo | le righe del buco |
+| **calo** | non è né un picco né un buco: W scende e non risale più | dalla riga dopo il calo a fine tabella |
+| **W_s<0** | righe con W_s negativa non già comprese in un evento (calo di W entro la tolleranza) | quelle righe |
+
+Gli aumenti di W, anche bruschi, non sono segnalati (vedi i limiti sotto).
+
+### Output in `output/<cartella>/W_check/`
+
+- `report_W_check.md`: riepilogo (tolleranza, numero di sezioni per tipo di evento) e, per ogni
+  sezione con anomalie, una riga di descrizione per evento e il grafico della sezione. Esempio:
+
+  > **picco** (righe 5-5): W sale da 10.82 a 12.82 m tra WSE 404.679 e 404.724 e torna a 10.82 m a
+  > WSE 404.730 (spessore 0.051 m); W_s minima -368.4
+
+- `W_check.csv`: un evento per riga, con le colonne:
+
+  | Colonna | Significato |
+  |---|---|
+  | `section`, `nome`, `asta` | sezione |
+  | `tipo` | `picco`, `buco`, `calo` o `W_s<0` |
+  | `righe` | righe anomale della tabella della sezione, `prima-ultima` (1 = livello più basso) |
+  | `WSE_da`, `WSE_a` | livelli della prima e dell'ultima riga anomala [m] |
+  | `W_prima`, `W_anomala`, `W_dopo` | W prima dell'evento, valore estremo (massimo del picco, minimo del buco) e W dopo [m] |
+  | `ampiezza` | \|W_anomala − W_dopo\| [m] |
+  | `W_s_min` | W_s minima nelle righe dell'evento e in quelle adiacenti |
+  | `descrizione` | la stessa frase del report |
+
+- `sezioni/<nome>.png`: per ogni sezione con anomalie, lo stesso grafico di `grafici/sezioni/`,
+  con le righe anomale in arancione in tutti i pannelli. La cartella è svuotata a ogni lancio, così
+  contiene solo le sezioni dell'ultimo controllo.
+
+A terminale stampa il numero di sezioni con anomalie e la tabella degli eventi.
+
+Con `Brenta_caldonazzo_borgo` trova 5 picchi, in `B05900`, `B06950`, `B13100`, `B13250` e
+`B16850`; il peggiore è `B16850`, con W_s = −2528 perché il picco si chiude in 1 mm di livello.
+
+### Parametri e limiti
+
+| Costante | Valore | Significato |
+|---|---|---|
+| `TolAbs` | 0,10 m | calo minimo di W considerato |
+| `TolRel` | 0,02 | calo minimo di W relativo a W |
+
+La cartella predefinita è quella di `grafici.jl` (`OutputDefault`). Il controllo non segnala:
+- i **salti verso l'alto** di W fra due livelli molto vicini (es. `B13500`, dove W passa da 16 a 19 m
+  in pochi mm): W_s diventa molto grande ma resta positiva;
+- i problemi delle altre grandezze (Ω, RH, jden), che si vedono nei grafici di `grafici.jl`.
+
+---
 
 ## Struttura della cartella
 
@@ -549,10 +782,11 @@ calcolo_tabelle_2Dto1D/
 ├── src/
 │   ├── main_sezioni.jl   # tabelle delle sezioni per il modello 1D
 │   ├── main_diversione.jl # scala di deflusso della diversione Brenta nuovo / Brenta vecchio
-│   ├── grafici.jl        # grafici di controllo dagli output
-│   └── W_check.jl        # controllo dei picchi di larghezza W
+│   ├── grafici.jl        # grafici di controllo dagli output (incluso da W_check.jl)
+│   └── W_check.jl        # controllo dei picchi della larghezza W
 ├── input/                # un caso per sottocartella (vedi "Input")
-└── output/               # un caso per sottocartella (vedi "Output")
+├── output/               # un caso per sottocartella (vedi "Output")
+└── BM_results/           # estrazione dei risultati BASEMENT (.h5 → CSV delle sezioni), progetto a parte
 ```
 
 I file dei risultati `.h5`, sopra i 50 MB, sono gestiti con **Git LFS** (vedi
