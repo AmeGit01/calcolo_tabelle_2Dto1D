@@ -67,10 +67,22 @@ function eventi_W(t)
     return ev
 end
 
-function check()
+#= Controllo e scrittura di report, CSV e grafici in `cartella`.
+    sezioni = nothing: tutte le sezioni, con report e grafico solo per quelle con anomalie.
+    sezioni = vettore di nomi: solo quelle, sempre con report e grafico (anche senza anomalie) e con la
+              tabella di W riga per riga (usato da W_check_sezioni.jl).
+=#
+function check(; sezioni=nothing, cartella=CheckFolder)
     geo, tab = carica()
-    rm(joinpath(CheckFolder, "sezioni"); force=true, recursive=true)   # niente grafici di sezioni vecchie
-    mkpath(joinpath(CheckFolder, "sezioni"))
+    scelte = sezioni !== nothing
+    if scelte
+        ignote = setdiff(sezioni, geo.nome)
+        isempty(ignote) || error("Sezioni non presenti in $(joinpath(Folder, "topologia_sezioni.csv")): " *
+            join(ignote, ", ") * "\n  Il nome va scritto come in topologia_sezioni.csv, es. $(first(geo.nome))")
+        geo = geo[in.(geo.nome, Ref(Set(sezioni))), :]
+    end
+    rm(joinpath(cartella, "sezioni"); force=true, recursive=true)   # niente grafici di sezioni vecchie
+    mkpath(joinpath(cartella, "sezioni"))
     out = DataFrame(section=Int[], nome=String[], asta=String[], tipo=String[], righe=String[],
         WSE_da=Float64[], WSE_a=Float64[], W_prima=Float64[], W_anomala=Float64[], W_dopo=Float64[],
         ampiezza=Float64[], W_s_min=Float64[], descrizione=String[])
@@ -80,7 +92,14 @@ function check()
     for gs in eachrow(sort(geo, :section))
         t = righe(tab, gs.section)
         ev = eventi_W(t)
-        isempty(ev) && continue
+        if isempty(ev)
+            scelte || continue
+            push!(md, "## $(gs.nome) (sezione $(gs.section), x = $(@sprintf("%.0f", gs["x_coord_[m]"])) m): nessuna anomalia", "")
+            append!(md, tabella_W(t, Int[]))
+            push!(md, "", "![$(gs.nome)](sezioni/$(gs.nome).png)", "")
+            savefig(plot_sezione(t, gs, "controllo W: nessuna anomalia"), joinpath(cartella, "sezioni", gs.nome*".png"))
+            continue
+        end
         nsez += 1
         for e in ev
             push!(out, (gs.section, gs.nome, string(gs.asta), e.tipo, "$(first(e.righe))-$(last(e.righe))",
@@ -89,20 +108,35 @@ function check()
         tipi = join(unique(getfield.(ev, :tipo)), ", ")
         push!(md, "## $(gs.nome) (sezione $(gs.section), x = $(@sprintf("%.0f", gs["x_coord_[m]"])) m): $tipi", "")
         append!(md, ["- **$(e.tipo)** (righe $(first(e.righe))-$(last(e.righe))): $(e.descr); W_s minima $(@sprintf("%.1f", e.W_s_min))" for e in ev])
-        push!(md, "", "![$(gs.nome)](sezioni/$(gs.nome).png)", "")
         evid = sort(unique(reduce(vcat, collect.(getfield.(ev, :righe)))))
-        savefig(plot_sezione(t, gs, "controllo W: $tipi"; evid=evid), joinpath(CheckFolder, "sezioni", gs.nome*".png"))
+        scelte && (push!(md, ""); append!(md, tabella_W(t, evid)))
+        push!(md, "", "![$(gs.nome)](sezioni/$(gs.nome).png)", "")
+        savefig(plot_sezione(t, gs, "controllo W: $tipi"; evid=evid), joinpath(cartella, "sezioni", gs.nome*".png"))
     end
     insert!(md, 4, "Sezioni con anomalie: **$nsez** ($(count(==("picco"), out.tipo)) picchi, " *
         "$(count(==("buco"), out.tipo)) buchi, $(count(==("calo"), out.tipo)) cali, " *
         "$(count(==("W_s<0"), out.tipo)) con sola derivata negativa).\n")
-    CSV.write(joinpath(CheckFolder, "W_check.csv"), out)
-    write(joinpath(CheckFolder, "report_W_check.md"), join(md, "\n"))
-    println("Controllo W: $nsez sezioni con anomalie su $(nrow(geo)), report in $CheckFolder")
+    CSV.write(joinpath(cartella, "W_check.csv"), out)
+    write(joinpath(cartella, "report_W_check.md"), join(md, "\n"))
+    println("Controllo W: $nsez sezioni con anomalie su $(nrow(geo)), report in $cartella")
     show(select(out, :nome, :tipo, :righe, :WSE_da, :WSE_a, :W_prima, :W_anomala, :W_dopo, :W_s_min),
         allrows=true, summary=false, eltypes=false)
     println()
     return out
 end
 
-check()
+# Tabella markdown di W riga per riga, con le righe anomale in grassetto
+function tabella_W(t, evid)
+    md = ["| riga | WSE [m] | W [m] | W_s [-] |", "|---|---|---|---|"]
+    for k in 1:nrow(t)
+        c = @sprintf("%d | %.3f | %.3f | %.2f", k, t.WSE[k], t.W[k], t.W_s[k])
+        push!(md, k in evid ? "| **" * replace(c, " | " => "** | **") * "** |" : "| $c |")
+    end
+    return md
+end
+
+# eseguito solo se lanciato direttamente: W_check_sezioni.jl include questo file
+if abspath(PROGRAM_FILE) == @__FILE__
+    length(ARGS) <= 1 || error("Uso: julia --project=. src/W_check.jl [<cartella di output>]")
+    check()
+end

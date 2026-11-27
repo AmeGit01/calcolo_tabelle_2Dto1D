@@ -21,6 +21,7 @@ Gli script sono in [src/](src/) e sono indipendenti: ognuno si lancia da termina
 | [main_diversione.jl](src/main_diversione.jl) | `input/<caso>` | `scala_diversione.csv` | scala di deflusso portata-portata della diversione Brenta nuovo / Brenta vecchio |
 | [grafici.jl](src/grafici.jl) | `output/<caso>` | `grafici/` | grafici di controllo delle tabelle già calcolate |
 | [W_check.jl](src/W_check.jl) | `output/<caso>` | `W_check/` | cerca i picchi della larghezza W che creano problemi nel modello 1D |
+| [W_check_sezioni.jl](src/W_check_sezioni.jl) | `output/<caso>` | `W_check_sezioni/` | stesso controllo, solo sulle sezioni indicate come argomenti |
 
 I primi due lavorano sui risultati 2D, gli altri due **solo sugli output già salvati**, quindi si
 possono rilanciare in ogni momento senza rifare il calcolo. Comandi pronti da copiare, dalla
@@ -39,7 +40,13 @@ Tutti e quattro insieme:
 for s in main_sezioni main_diversione grafici W_check; do julia --project=. src/$s.jl Brenta_caldonazzo_borgo || break; done
 ```
 
-Gli ultimi tre hanno `Brenta_caldonazzo_borgo` come cartella predefinita e si possono lanciare
+Per ricontrollare solo alcune sezioni, per esempio dopo averle corrette a mano:
+
+```bash
+julia --project=. src/W_check_sezioni.jl Brenta_caldonazzo_borgo B13100 B32300
+```
+
+`main_diversione.jl`, `grafici.jl` e `W_check.jl` hanno `Brenta_caldonazzo_borgo` come cartella predefinita e si possono lanciare
 anche senza argomento; `main_sezioni.jl` no (il suo caso predefinito è `S_0050_6000_q2`). Il
 calcolo delle tabelle richiede alcuni minuti, gli altri script pochi secondi più la compilazione
 di Julia.
@@ -58,8 +65,9 @@ di Julia.
 8. [Diversione Brenta nuovo / Brenta vecchio (`main_diversione.jl`)](#diversione-brenta-nuovo--brenta-vecchio-main_diversionejl)
 9. [Grafici di controllo (`grafici.jl`)](#grafici-di-controllo-graficijl)
 10. [Controllo della larghezza W (`W_check.jl`)](#controllo-della-larghezza-w-w_checkjl)
-11. [Struttura della cartella](#struttura-della-cartella)
-12. [Note e limitazioni](#note-e-limitazioni)
+11. [Controllo di W su sezioni scelte (`W_check_sezioni.jl`)](#controllo-di-w-su-sezioni-scelte-w_check_sezionijl)
+12. [Struttura della cartella](#struttura-della-cartella)
+13. [Note e limitazioni](#note-e-limitazioni)
 
 ---
 
@@ -336,6 +344,7 @@ output/<caso>/
 ├── scala_diversione.csv       # main_diversione.jl
 ├── grafici/                   # grafici.jl
 ├── W_check/                   # W_check.jl
+├── W_check_sezioni/           # W_check_sezioni.jl
 └── <nome sezione>/            # main_sezioni.jl, solo con CartelleSezioni = true
     ├── tabella.csv            # tabella completa della sezione
     ├── area_bagnata.svg
@@ -772,6 +781,72 @@ La cartella predefinita è quella di `grafici.jl` (`OutputDefault`). Il controll
 
 ---
 
+## Controllo di W su sezioni scelte (`W_check_sezioni.jl`)
+
+[src/W_check_sezioni.jl](src/W_check_sezioni.jl) fa lo stesso controllo di `W_check.jl` (stessi
+criteri e tolleranze, vedi sopra), ma **solo sulle sezioni passate come argomenti** invece di
+cercarle da solo. Serve soprattutto a ricontrollare le sezioni corrette a mano nei file di input,
+dopo aver rilanciato `main_sezioni.jl`.
+
+Comando pronto da copiare:
+
+```bash
+julia --project=. src/W_check_sezioni.jl Brenta_caldonazzo_borgo B13100 B32300
+```
+
+Forma generale:
+
+```bash
+julia --project=. src/W_check_sezioni.jl <cartella di output> <sezione> [<sezione> ...]
+```
+
+| Argomento | Significato |
+|---|---|
+| `<cartella di output>` | sottocartella di `output/` con le tabelle già calcolate; **obbligatoria** (non c'è cartella predefinita) |
+| `<sezione>` | una o più sezioni, con il nome come in `topologia_sezioni.csv` (es. `B13100`); i doppioni sono ignorati |
+
+Senza almeno una cartella e una sezione stampa l'uso e si ferma; se una sezione non esiste nella
+cartella si ferma indicando quali nomi non ha trovato.
+
+Differenze rispetto a `W_check.jl`:
+- report e grafico sono scritti per **tutte** le sezioni richieste, anche quelle senza anomalie
+  (titolo "nessuna anomalia"), così si vede l'esito di ognuna;
+- per ogni sezione il report contiene anche la **tabella di W riga per riga** (riga, WSE, W, W_s),
+  con le righe anomale in grassetto, per trovare subito il valore da correggere. Le righe sono
+  quelle della tabella calcolata, ordinate per livello: non coincidono con le righe del file di
+  input (la prima riga del file è l'istante iniziale, e le righe asciutte sono ricostruite), ma
+  il livello WSE permette di ritrovarle;
+- l'output va in `output/<cartella>/W_check_sezioni/`, separata da `W_check/`, con gli stessi file
+  (`report_W_check.md`, `W_check.csv`, `sezioni/<nome>.png`). La sottocartella `sezioni/` è svuotata
+  a ogni lancio, quindi contiene solo le sezioni dell'ultima richiesta.
+
+Esempio di report per una sezione con un picco:
+
+> **B13100 (sezione 263, x = 13175 m): picco**
+>
+> - **picco** (righe 5-5): W sale da 10.82 a 12.82 m tra WSE 404.679 e 404.724 e torna a 10.82 m a WSE 404.730 (spessore 0.051 m); W_s minima -368.4
+>
+> | riga | WSE [m] | W [m] | W_s [-] |
+> |---|---|---|---|
+> | 4 | 404.679 | 10.821 | 44.29 |
+> | **5** | **404.724** | **12.821** | **-368.43** |
+> | 6 | 404.730 | 10.821 | 0.00 |
+
+Lo script include `W_check.jl` (che a sua volta include `grafici.jl`) e ne chiama la funzione
+`check(; sezioni, cartella)`; per questo `W_check.jl` e `grafici.jl` eseguono il proprio controllo
+solo quando sono lanciati direttamente.
+
+Flusso tipico per correggere una sezione:
+
+```bash
+julia --project=. src/W_check.jl Brenta_completo                          # trova le sezioni con picchi
+# ... correzione a mano dei file in input/Brenta_completo ...
+julia --project=. src/main_sezioni.jl Brenta_completo                     # ricalcola le tabelle
+julia --project=. src/W_check_sezioni.jl Brenta_completo B13100 B32300    # verifica le sezioni corrette
+```
+
+---
+
 ## Struttura della cartella
 
 ```
@@ -783,7 +858,8 @@ calcolo_tabelle_2Dto1D/
 │   ├── main_sezioni.jl   # tabelle delle sezioni per il modello 1D
 │   ├── main_diversione.jl # scala di deflusso della diversione Brenta nuovo / Brenta vecchio
 │   ├── grafici.jl        # grafici di controllo dagli output (incluso da W_check.jl)
-│   └── W_check.jl        # controllo dei picchi della larghezza W
+│   ├── W_check.jl        # controllo dei picchi della larghezza W (incluso da W_check_sezioni.jl)
+│   └── W_check_sezioni.jl # controllo di W sulle sezioni passate come argomenti
 ├── input/                # un caso per sottocartella (vedi "Input")
 ├── output/               # un caso per sottocartella (vedi "Output")
 └── BM_results/           # estrazione dei risultati BASEMENT (.h5 → CSV delle sezioni), progetto a parte

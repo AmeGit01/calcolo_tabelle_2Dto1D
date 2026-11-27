@@ -32,7 +32,10 @@ function quantile(v, p)
 end
 const ProjectFolder = normpath(joinpath(@__DIR__, ".."))
 
-length(ARGS) <= 1 || error("Uso: julia --project=. src/$(basename(PROGRAM_FILE)) [<cartella di output>]")
+# il primo argomento è la cartella; gli altri script che includono questo file possono averne altri
+if abspath(PROGRAM_FILE) == @__FILE__() && length(ARGS) > 1
+    error("Uso: julia --project=. src/grafici.jl [<cartella di output>]")
+end
 const OutputName = isempty(ARGS) ? OutputDefault : basename(rstrip(ARGS[1], '/'))
 const Folder = joinpath(ProjectFolder, "output", OutputName)
 const PlotFolder = joinpath(Folder, "grafici")
