@@ -108,11 +108,36 @@ const ESEMPIO_SEZIONE = """
     430.73,1.0,2.40,430.48,430.46,9.32,..."""
 
 # Legge un file CSV e controlla che abbia le colonne richieste; se ne manca qualcuna si ferma
-# spiegando come deve essere organizzato il file
-function read_input_table(path, colonne, esempio)
-    data = CSV.read(path, DataFrame)
+# spiegando come deve essere organizzato il file. Si ferma anche se il file è malformato (righe con un
+# numero di campi diverso dall'intestazione, tipico di una modifica a mano) e, con numeriche=true, se
+# le colonne richieste contengono valori non numerici o mancanti, indicando file, riga e valore.
+function read_input_table(path, colonne, esempio; numeriche::Bool=false)
+    data = try
+        CSV.read(path, DataFrame; on_error=:error)
+    catch err
+        n_intestazione = length(split(first(eachline(path)), ','))
+        errate = [(k, length(split(r, ','))) for (k, r) in enumerate(eachline(path)) if length(split(r, ',')) != n_intestazione]
+        stop_with("ERRORE nel file $path\n  Il file non è un CSV valido" *
+            (isempty(errate) ? ": $(sprint(showerror, err))" :
+                ". L'intestazione ha $n_intestazione campi, ma queste righe (numerate dalla prima del file)\n" *
+                "  ne hanno un numero diverso, probabilmente per una virgola mancante o in più:\n" *
+                join(("    riga $k: $n campi" for (k, n) in errate), "\n")),
+            "File $(basename(path)) malformato: elaborazione interrotta")
+    end
     mancanti = [c for (c, _) in colonne if !(c in names(data))]
-    isempty(mancanti) && return data
+    if isempty(mancanti)
+        numeriche || return data
+        nonnum = [(c, k + 1, v) for (c, _) in colonne for (k, v) in enumerate(data[!, c])
+                  if !(v isa Real) && (ismissing(v) || tryparse(Float64, string(v)) === nothing)]
+        isempty(nonnum) || stop_with("ERRORE nel file $path\n  Valori non numerici o mancanti nelle colonne richieste " *
+            "(righe numerate dalla prima del file, intestazione = riga 1):\n" *
+            join(("    riga $k, \"$c\": $(repr(v))" for (c, k, v) in nonnum), "\n"),
+            "Valori non numerici in $(basename(path)): elaborazione interrotta")
+        for (c, _) in colonne
+            eltype(data[!, c]) <: Real || (data[!, c] = [v isa Real ? Float64(v) : parse(Float64, string(v)) for v in data[!, c]])
+        end
+        return data
+    end
     larghezza = maximum(length(c) for (c, _) in colonne)
     msg = "ERRORE nel file $path\n" *
           "  Colonne mancanti: " * join(("\"$c\"" for c in mancanti), ", ") * "\n" *
@@ -205,7 +230,7 @@ end
 
 # Legge i dati di una sezione e "ripara" i valori artificialmente messi a 0 quando è asciutta
 function load_section(InputPath)
-    data = read_input_table(InputPath, COLONNE_SEZIONE, ESEMPIO_SEZIONE)
+    data = read_input_table(InputPath, COLONNE_SEZIONE, ESEMPIO_SEZIONE; numeriche=true)
     wet =data[!, "Wetted area [m2]"] .> 0.0
     # quota di riferimento dalla prima riga bagnata: in quelle asciutte BASEMENT scrive 0
     k1 = findfirst(wet)

@@ -21,7 +21,7 @@ using Printf, CSV, DataFrames
 const InputDefault = "Brenta_caldonazzo_borgo"
 const SezMonte = "B13200"      # ultima sezione a canale singolo, a monte della divergenza
 const SezNuovo = "B13250"      # prima sezione del Brenta nuovo, usata solo per il bilancio
-const SezVecchio = "V00050"    # prima sezione del Brenta vecchio con risultati (V00000 non c'è)
+const SezVecchio = "V00000"    # prima sezione del Brenta vecchio con risultati (V00000 non c'è)
 # scarto massimo del bilancio Q_monte - Q_nuovo - Q_vecchio, relativo a Q_monte, oltre il quale si avvisa
 const Bilancio_lim = 0.02
 const Format = ".csv"
