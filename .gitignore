@@ -1,2 +1,7 @@
 Manifest.toml
 __pycache__/
+
+# risultati BASEMENT oltre il limite di GitHub LFS (2 GB): non versionati
+BM_results/inputs/Vaia_results.h5
+BM_results/inputs/aprile_sim_results.h5
+BM_results/inputs/gennaio_sim_results.h5
